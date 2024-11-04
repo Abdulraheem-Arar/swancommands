@@ -1,0 +1,43 @@
+{
+  "name": "swancommands",
+  "displayName": "swanCommands",
+  "description": "this is an extesnsion built to allow you to run swan commands in the command palette ",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.94.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [{
+      "command": "swancommands.helloWorld",
+      "title": "Hello World"
+    },
+  {
+   "command": "swancommands.callGraph",
+      "title": "callGraph"
+  },{
+     "command": "swancommands.taintAnalysis",
+      "title": "taintAnalysis"
+  },{
+    "command": "swancommands.typeStateAnalysis",
+     "title": "typeStateAnalysis"
+ }]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.94.0",
+    "@types/mocha": "^10.0.9",
+    "@types/node": "20.x",
+    "eslint": "^9.13.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+}
