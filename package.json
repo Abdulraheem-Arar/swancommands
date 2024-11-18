@@ -1,7 +1,7 @@
 {
   "name": "swancommands",
   "displayName": "swanCommands",
-  "description": "this is an extesnsion built to allow you to run swan commands in the command palette ",
+  "description": "this is an extension built to allow you to run swan commands in the command palette",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.94.0"
@@ -9,23 +9,48 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onLanguage:swift"],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "swancommands.helloWorld",
-      "title": "Hello World"
+    "commands": [
+      {
+        "command": "swancommands.menu",
+        "title": "analysis options"
+      },
+      {
+        "command": "swancommands.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "swancommands.callGraph",
+        "title": "callGraph"
+      },
+      {
+        "command": "swancommands.taintAnalysis",
+        "title": "taintAnalysis"
+      },
+      {
+        "command": "swancommands.typeStateAnalysis",
+        "title": "typeStateAnalysis"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "swanActivityContainer",
+          "title": "Swan",
+          "icon": "resources/swan-icon.svg"
+        }
+      ]
     },
-  {
-   "command": "swancommands.callGraph",
-      "title": "callGraph"
-  },{
-     "command": "swancommands.taintAnalysis",
-      "title": "taintAnalysis"
-  },{
-    "command": "swancommands.typeStateAnalysis",
-     "title": "typeStateAnalysis"
- }]
+    "views": {
+      "swanActivityContainer": [
+        {
+          "id": "swanView",
+          "name": "Swan View"
+        }
+      ]
+    }
   },
   "scripts": {
     "lint": "eslint .",
