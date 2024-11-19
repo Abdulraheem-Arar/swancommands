@@ -1,5 +1,3 @@
-import { json } from 'stream/consumers';
-
 const vscode = require('vscode');
 const runCallGraph = require('./callgraph');
 const runTypestate = require('./typestateanalysis');
@@ -40,13 +38,13 @@ function activate(context) {
                 // Activate the selected module
                 if (selection.value === 'taint') {
                     currentModule = runTaint;
-                    currentModule.activate(context,diagnosticCollection);
+                    currentModule.activate(context);
                 } else if (selection.value === 'typestate') {
                     currentModule = runTypestate;
-                    currentModule.activate(context,diagnosticCollection);
+                    currentModule.activate(context);
                 } else if (selection.value === 'callgraph') {
                     currentModule = runCallGraph;
-                    currentModule.activate(context,diagnosticCollection);
+                    currentModule.activate(context);
                 }
             }
         });
@@ -321,37 +319,49 @@ function activate(context) {
                                     if (error) {
                                         outputChannel.appendLine(`Error: ${stderr}`);
                                     } else {
-                                        //outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
-                                        fs.readFile(`${packageSwiftDirectory}/swan-dir/taint-results.json`,'utf8',(err,data)=>{
-                                            if (err) {
-                                                console.error('Error reading file:', err.message);
-                                                return;
-                                            }
-                                        
+                                      //  outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
                                             try {
-                                                const jsonData = JSON.parse(data); // Parse the JSON data
-                                                let diagnostics = []
-                                                if(jsonData.paths && jsonData.paths.length>0){
-                                                    jsonData.paths.path.forEach((path)=>{
-                                                        const match = path.match(/^(.*):(\d+):(\d+)$/);
-                                                        if (match) {
-                                                          const [_, filePath, lineStr, colStr] = match;
-                                                          const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
-                                                          const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
-
-                                                          const range = new vscode.Range(new vscode.Position(line - 1, col -1), new vscode.Position(line - 1, col -1));
-                                                          //const diagnostic = new vscode.Diagnostic(range, `Method ${method.name} has more than 3 parameters`, vscode.DiagnosticSeverity.Warning); 
-                                                          diagnostics.push(diagnostic) 
+                                                const resultFilePath = path.join(packageSwiftDirectory, 'swan-dir', 'taint-results.json');
+                                            fs.readFile(resultFilePath, 'utf8', (err, data) => {
+                                                if (err) {
+                                                    outputChannel.appendLine(`Error reading taint-results.json: ${err.message}`);
+                                                } else {
+                                                    try {
+                                                        const jsonData = JSON.parse(data);
+                                                        outputChannel.appendLine('taint Results:');
+                                                        outputChannel.appendLine(JSON.stringify(jsonData, null, 2));
+                                                        let diagnostics = []
+                                                        if(jsonData[0].paths && jsonData[0].paths.length>0){
+                                                            jsonData[0].paths[0].path.forEach((path)=>{
+                                                                const match = path.match(/^(.*):(\d+):(\d+)$/);
+                                                                if (match) {
+                                                                  const [_, filePath, lineStr, colStr] = match;
+                                                                  const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
+                                                                  const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
+        
+                                                                  const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
+                                                                  const diagnostic = new vscode.Diagnostic(range, `taint analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                  diagnostics.push(diagnostic) 
+                                                                }
+                                                                const activeEditor = vscode.window.activeTextEditor;
+                                                                if (activeEditor) {
+                                                                diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                            }
+        
+                                                            });
                                                         }
-                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics);
-
-                                                    });
-
+                                                    } catch (parseErr) {
+                                                        outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
+                                                    }
                                                 }
+                                            });
+                                              
+                                                    
+
                                             } catch (parseErr) {
                                                 console.error('Error parsing JSON:', parseErr.message);
                                             }
-                                        });
+                                        
                                     }
                                 });
                             } else {

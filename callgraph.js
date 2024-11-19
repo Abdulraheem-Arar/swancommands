@@ -8,7 +8,7 @@ const path = require('path');
 
 
 
-function activate(context,diagnosticCollection) {
+function activate(context) {
     function detectSwiftDocument(document) {
         if (document && document.languageId === 'swift') {
             //vscode.window.showInformationMessage('Swift file detected: ' + document.fileName);
