@@ -6,8 +6,6 @@ const os = require('os');
 const path = require('path');
 
 
-let characterChangeCount = 0;
-const CHANGE_THRESHOLD = 40;
 
 function activate(context) {
     function detectSwiftDocument(document) {
@@ -26,19 +24,6 @@ function activate(context) {
     
     vscode.workspace.onDidSaveTextDocument(document => {
             detectSwiftDocument(document)
-    });
-    
-    vscode.workspace.onDidChangeTextDocument(event => {
-        const changes = event.contentChanges;
-        //console.log(changes)
-        changes.forEach(change => {
-            characterChangeCount += change.text.length;
-        });
-
-        if (characterChangeCount >= CHANGE_THRESHOLD) {
-            characterChangeCount = 0; // Reset counter after reaching the threshold
-            vscode.commands.executeCommand('swancommands.taintAnalysis')// Run your analysis
-        }
     });
 
     // Detect already open Swift files when the extension is activated
