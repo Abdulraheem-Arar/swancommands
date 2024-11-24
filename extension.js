@@ -20,7 +20,7 @@ class SwanTreeDataProvider {
                 this.createParentItem("Run Analysis", [
                     "callGraph",
                     "typeStateAnalysis",
-                    "typeStateAnalysis"
+                    "taintAnalysis"
                 ]),
                 this.createParentItem("View Results", [
                     "Analysis Summary",
@@ -54,6 +54,11 @@ class SwanTreeDataProvider {
         parent.children = childrenLabels.map((childLabel) => {
             const item = new vscode.TreeItem(childLabel, vscode.TreeItemCollapsibleState.None);
             if (label === 'Run Analysis') {
+                item.command = {
+                    command: `swancommands.${childLabel}`, // Adjusting the command string
+                    title: `Run ${childLabel}`, // Optional: add title for clarity
+                };
+            } else if(childLabel === 'Detailed Logs'){
                 item.command = {
                     command: `swancommands.${childLabel}`, // Adjusting the command string
                     title: `Run ${childLabel}`, // Optional: add title for clarity
@@ -119,8 +124,21 @@ function activate(context) {
         }
         currentModule = null;
     }
-
     
+    const outputChannel = vscode.window.createOutputChannel('Swan Analysis');
+    outputChannel.clear();
+    let isOutputChannel = false; 
+
+    const showOutputChannel = vscode.commands.registerCommand('swancommands.Detailed Logs', function () {
+        if (!isOutputChannel){
+            outputChannel.show(true);
+            isOutputChannel = true;
+        } else {
+            vscode.commands.executeCommand('workbench.action.closePanel');
+            isOutputChannel = false;
+        }
+        
+    })
 
 
     const createCallGraph = vscode.commands.registerCommand('swancommands.callGraph', function () {
@@ -136,8 +154,8 @@ function activate(context) {
 
          // Show a message that the file is running
          vscode.window.showInformationMessage('Running: ' + filePath);
-         const outputChannel = vscode.window.createOutputChannel('Swan Analysis');
-         outputChannel.show(); // Opens the output channel in the editor
+      
+         // Opens the output channel in the editor
 
 
          
@@ -246,8 +264,7 @@ function activate(context) {
             let folderPath = path.dirname(filePath);
             const fileName = path.basename(filePath);
 
-            const outputChannel = vscode.window.createOutputChannel('Swan Analysis');
-            outputChannel.show();
+            
 
 
             // Function to find the directory containing `Package.swift`
@@ -270,15 +287,15 @@ function activate(context) {
 
                 cp.exec(`cd ${folderPath} &&  /home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc ${fileName}`, (error, stdout, stderr) => { 
                     if (error) {
-                        //outputChannel.appendLine(`Error: ${stderr}`);
+                        outputChannel.appendLine(`Error: ${stderr}`);
                     } else{
                         setTimeout(() => {
                             fs.readdir(`${folderPath}/swan-dir`, (err, files) => {
                                 if (err) {
-                                   // outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
+                                    outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
                                    }
                                    else {
-                                     //outputChannel.appendLine(`Files in swan-dir: ${files.join(', ')}`);
+                                     outputChannel.appendLine(`Files in swan-dir: ${files.join(', ')}`);
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
@@ -291,7 +308,7 @@ function activate(context) {
                                                     const resultFilePath = path.join(folderPath, 'swan-dir', 'taint-results.json');
                                                 fs.readFile(resultFilePath, 'utf8', (err, data) => {
                                                     if (err) {
-                                                       // outputChannel.appendLine(`Error reading taint-results.json: ${err.message}`);
+                                                        outputChannel.appendLine(`Error reading taint-results.json: ${err.message}`);
                                                     } else {
                                                         try {
                                                             const jsonData = JSON.parse(data);
@@ -317,7 +334,7 @@ function activate(context) {
                                                                 });
                                                             }
                                                         } catch (parseErr) {
-                                                            //outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
+                                                            outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
                                                         }
                                                     }
                                                 });
@@ -331,7 +348,7 @@ function activate(context) {
                                         }
                                     });
                                 } else {
-                                   // outputChannel.appendLine("No files found in swan-dir after timeout.");
+                                   outputChannel.appendLine("No files found in swan-dir after timeout.");
                                 }
                             });
                         }, 1000);
@@ -440,23 +457,22 @@ function activate(context) {
             const packageSwiftDirectory = findPackageSwiftDirectory(folderPath);
 
             vscode.window.showInformationMessage('Running: ' + filePath);
-            const outputChannel = vscode.window.createOutputChannel('Swan Analysis');
-            //outputChannel.show(); // Opens the output channel in the editor
+            outputChannel.show(); // Opens the output channel in the editor
     
             if (!packageSwiftDirectory) {
                 vscode.window.showInformationMessage('Could not find Package.swift in the directory hierarchy.');
 
                 cp.exec(`cd ${folderPath} &&  /home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc ${fileName}`, (error, stdout, stderr) => { 
                     if (error) {
-                        //outputChannel.appendLine(`Error: ${stderr}`);
+                        outputChannel.appendLine(`Error: ${stderr}`);
                     } else{
                         setTimeout(() => {
                             fs.readdir(`${folderPath}/swan-dir`, (err, files) => {
                                 if (err) {
-                                   // outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
+                                   outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
                                    }
                                    else {
-                                     //outputChannel.appendLine(`Files in swan-dir: ${files.join(', ')}`);
+                                     outputChannel.appendLine(`Files in swan-dir: ${files.join(', ')}`);
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
@@ -469,7 +485,7 @@ function activate(context) {
                                                     const resultFilePath = path.join(folderPath, 'swan-dir', 'taint-results.json');
                                                 fs.readFile(resultFilePath, 'utf8', (err, data) => {
                                                     if (err) {
-                                                       // outputChannel.appendLine(`Error reading taint-results.json: ${err.message}`);
+                                                       outputChannel.appendLine(`Error reading taint-results.json: ${err.message}`);
                                                     } else {
                                                         try {
                                                             const jsonData = JSON.parse(data);
@@ -495,7 +511,7 @@ function activate(context) {
                                                                 });
                                                             }
                                                         } catch (parseErr) {
-                                                            //outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
+                                                            outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
                                                         }
                                                     }
                                                 });
@@ -509,7 +525,7 @@ function activate(context) {
                                         }
                                     });
                                 } else {
-                                   // outputChannel.appendLine("No files found in swan-dir after timeout.");
+                                   outputChannel.appendLine("No files found in swan-dir after timeout.");
                                 }
                             });
                         }, 1000);
@@ -537,33 +553,33 @@ function activate(context) {
                
               cp.exec(`cd ${packageSwiftDirectory} &&  python3 /home/abdulraheem/swanNewBuild/swan/tests/swan-spm.py`, (error, stdout, stderr) => { 
                     if (error) {
-                        //outputChannel.appendLine(`Error: ${stderr}`);
+                        outputChannel.appendLine(`Error: ${stderr}`);
                     } else{
                         setTimeout(() => {
                             fs.readdir(`${packageSwiftDirectory}/swan-dir`, (err, files) => {
                                 if (err) {
-                                   // outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
+                                   outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
                                    }
                                    else {
-                                     //outputChannel.appendLine(`Files in swan-dir: ${files.join(', ')}`);
+                                     outputChannel.appendLine(`Files in swan-dir: ${files.join(', ')}`);
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
                                     cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { 
                                         if (error) {
-                                           // outputChannel.appendLine(`Error: ${stderr}`);
+                                            outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
-                                          //  outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
+                                            outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
                                                 try {
                                                     const resultFilePath = path.join(packageSwiftDirectory, 'swan-dir', 'taint-results.json');
                                                 fs.readFile(resultFilePath, 'utf8', (err, data) => {
                                                     if (err) {
-                                                       // outputChannel.appendLine(`Error reading taint-results.json: ${err.message}`);
+                                                        outputChannel.appendLine(`Error reading taint-results.json: ${err.message}`);
                                                     } else {
                                                         try {
                                                             const jsonData = JSON.parse(data);
-                                                          //  outputChannel.appendLine('taint Results:');
-                                                           // outputChannel.appendLine(JSON.stringify(jsonData, null, 2));
+                                                            outputChannel.appendLine('taint Results:');
+                                                            outputChannel.appendLine(JSON.stringify(jsonData, null, 2));
                                                             let diagnostics = []
                                                             if(jsonData[0].paths && jsonData[0].paths.length>0){
                                                                 jsonData[0].paths[0].path.forEach((path)=>{
@@ -584,7 +600,7 @@ function activate(context) {
                                                                 });
                                                             }
                                                         } catch (parseErr) {
-                                                            //outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
+                                                            outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
                                                         }
                                                     }
                                                 });
@@ -598,7 +614,7 @@ function activate(context) {
                                         }
                                     });
                                 } else {
-                                   // outputChannel.appendLine("No files found in swan-dir after timeout.");
+                                   outputChannel.appendLine("No files found in swan-dir after timeout.");
                                 }
                             });
                         }, 1000);
@@ -612,7 +628,7 @@ function activate(context) {
 		vscode.window.showInformationMessage('Hello World from swift detect 3!');
 	});
 
-	context.subscriptions.push(runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
+	context.subscriptions.push(showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
 }
 
 function deactivate() {
