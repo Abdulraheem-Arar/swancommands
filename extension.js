@@ -9,7 +9,24 @@ const cp = require('child_process');
 let currentModule;
 
 
+class ErrorItem extends vscode.TreeItem {
+    constructor(label,message, collapsibleState) {
+        // Call the parent class constructor with the label and collapsible state
+        super(label, collapsibleState);
+
+        this.tooltip = message; // Tooltip to show the full error message
+    }
+}
+
+
 class SwanTreeDataProvider {
+
+    constructor() {
+        this.errors = [];
+        this._onDidChangeTreeData = new vscode.EventEmitter();
+        this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+    }
+
     getTreeItem(element) {
         return element;
     }
@@ -32,17 +49,29 @@ class SwanTreeDataProvider {
                 ]),
             ];
 
-            // Move "Settings" to the bottom
-            const settingsIndex = children.findIndex(child => child.label === "Settings");
-            if (settingsIndex > -1) {
-                const settingsItem = children.splice(settingsIndex, 1)[0]; // Remove "Settings"
-                children.push(settingsItem); // Add "Settings" at the end
+            if (this.errors.length > 0) {
+                const errorParent = new vscode.TreeItem(
+                    "Errors",
+                    vscode.TreeItemCollapsibleState.Expanded
+                );
+                errorParent.children = this.errors;
+                children.push(errorParent); 
             }
+            // Move "Settings" to the bottom
+            this.moveItemToEnd(children, "Settings");
 
             return children;
         } else {
             // Nested children for each parent item
             return element.children || [];
+        }
+    }
+
+    moveItemToEnd(items, labelToMove) {
+        const index = items.findIndex((item) => item.label === labelToMove);
+        if (index > -1) {
+            const [item] = items.splice(index, 1); // Remove the item
+            items.push(item); // Add it to the end
         }
     }
 
@@ -68,16 +97,34 @@ class SwanTreeDataProvider {
         });
         return parent;
     }
+
+    addError(label,message) {
+        const error = new ErrorItem(label,message, vscode.TreeItemCollapsibleState.None);
+        this.errors.push(error);
+        this.refresh();
+    }
+
+    // Clear all errors
+    clearErrors() {
+        this.errors = [];
+        this.refresh();
+    }
+
+    // Refresh the TreeView
+    refresh() {
+        this._onDidChangeTreeData.fire();
+    }
+
 }
 
 
 function activate(context) {
     
     const treeDataProvider = new SwanTreeDataProvider();
+    
     vscode.window.createTreeView("swanView", {
         treeDataProvider,
     });
-
     console.log('Extension is now active!');
 
    let diagnosticCollection = vscode.languages.createDiagnosticCollection('analyzeMethods')
@@ -94,9 +141,14 @@ function activate(context) {
 		//vscode.window.showInformationMessage('Hello World from swift detect 3!');
 	});
 
+    function detectSwiftDocument(document) {
+        if (document && document.languageId === 'swift') {
+            showAnalysisOptions()
+        }
+    }
     
-
-    showAnalysisOptions();
+const document = vscode.window.activeTextEditor.document;
+    detectSwiftDocument(document)
     
     function showAnalysisOptions() {
         vscode.window.showQuickPick(analysisOptions, { placeHolder: 'Select an analysis option' }).then(selection => {
@@ -147,6 +199,8 @@ function activate(context) {
         const swiftcPath = '/home/abdulraheem/buildingSwan/swan/lib/swan-swiftc'
         const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
 		// Display a message box to the user
+
+
         if (activeEditor) {
             const filePath = activeEditor.document.fileName;
             const folderPath = path.dirname(filePath);
@@ -175,7 +229,7 @@ function activate(context) {
             const packageSwiftDirectory = findPackageSwiftDirectory(folderPath);
     
             if (!packageSwiftDirectory) {
-                vscode.window.showErrorMessage('Could not find Package.swift in the directory hierarchy.');
+                treeDataProvider.addError('Could not find Package.swift', ' if you are in an spm project make sure you have your cursor in the file you want to analyse');
                 
                 cp.exec(`cd ${folderPath} && /home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc ${fileName}`, (error, stdout, stderr) => { 
                     if (error) {
