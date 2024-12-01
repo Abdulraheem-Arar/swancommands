@@ -32,7 +32,19 @@
       {
         "command": "swancommands.typeStateAnalysis",
         "title": "typeStateAnalysis"
-      }
+      },{
+        "command": "swancommands.Detailed Logs",
+        "title": "Show Detailed Logs"
+    },{
+      "command": "swancommands.cryptoAnalysis",
+      "title": "cryptoAnalysis"
+    },{
+      "command": "swancommands.runActivityBar",
+      "title": "runActivityBar"
+    },{
+      "command": "swancommands.debug",
+      "title": "debug"
+    }
     ],
     "viewsContainers": {
       "activitybar": [
@@ -46,9 +58,21 @@
     "views": {
       "swanActivityContainer": [
         {
-          "id": "swanView",
-          "name": "Swan View"
-        }
+          "id": "runAnalysisView",
+          "name": "Run Analysis"
+      },
+      {
+          "id": "viewResultsView",
+          "name": "View Results"
+      },
+      {
+          "id": "settingsView",
+          "name": "Settings"
+      },
+      {
+          "id": "errorsView",
+          "name": "Errors"
+      }
       ]
     }
   },
