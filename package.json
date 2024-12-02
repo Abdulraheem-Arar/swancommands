@@ -39,10 +39,10 @@
       "command": "swancommands.cryptoAnalysis",
       "title": "cryptoAnalysis"
     },{
-      "command": "swancommands.runActivityBar",
-      "title": "runActivityBar"
-    },{
       "command": "swancommands.debug",
+      "title": "debug"
+    },{
+      "command": "swancommands.setAnalysisSpec",
       "title": "debug"
     }
     ],

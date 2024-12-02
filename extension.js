@@ -9,15 +9,13 @@ const fs = require('fs');
 const cp = require('child_process');
 
 let currentModule;
-
+let analysisSpecPath = ""; 
 
 class ErrorItem extends vscode.TreeItem {
     constructor(label,message, collapsibleState) {
         // Call the parent class constructor with the label and collapsible state
         super(label, collapsibleState);
-
         this.tooltip = message; // Tooltip to show the full error message
-        this.description = message; 
     }
 }
 
@@ -43,11 +41,7 @@ class SwanTreeDataProvider {
                 if (this.shouldShowAnalysis()) {
                     // Add the children of 'Settings' directly to the root level
                     children = children.concat( this.createParentItem("Run Analysis", [
-                        "callGraph",
-                    "typeStateAnalysis",
-                    "taintAnalysis",
-                    "cryptoAnalysis",
-                    "debug"
+                        "Analysis options"
                     ]).children); // Only include the children, not the parent item itself
                 }
 
@@ -65,13 +59,14 @@ class SwanTreeDataProvider {
                     // Add the children of 'Settings' directly to the root level
                     children = children.concat(this.createParentItem("Settings", [
                         "General Settings",
-                        "Advanced Settings"
+                        "Analysis spec"
                     ]).children); // Only include the children, not the parent item itself
                 }
-            } else if (this.parentLabel === "Errors" && this.errors.length > 0) {
+            } else if (this.parentLabel === "Errors" && this.errors.length>0) {
                 children = this.errors;
             }
-    
+            console.log("Returning children: ", children);
+
             return children;
         } else {
             return element.children || [];
@@ -85,16 +80,22 @@ class SwanTreeDataProvider {
         );
         parent.children = childrenLabels.map((childLabel) => {
             const item = new vscode.TreeItem(childLabel, vscode.TreeItemCollapsibleState.None);
-            if (label === 'Run Analysis') {
+            if (childLabel === 'Analysis options') {
                 item.command = {
-                    command: `swancommands.runActivityBar`, // A generic command for all analysis types
-                    arguments: [childLabel],
+                    command: `swancommands.menu`, // A generic command for all analysis types
                     title: `Run ${childLabel}`, // Optional: add title for clarity
                 };
-            } else if(childLabel === 'Detailed Logs'){
+            } else if(childLabel === 'Detailed Logs' ){
                 item.command = {
                     command: `swancommands.${childLabel}`, // Adjusting the command string
                     title: `Run ${childLabel}`, // Optional: add title for clarity
+                };
+            } else if (childLabel === "Analysis spec") {
+                // Show current path in description
+                item.description = analysisSpecPath || "No path set";
+                item.command = {
+                    command: `swancommands.setAnalysisSpec`, // Command to handle setting the spec
+                    title: "Set Analysis Spec",
                 };
             }
             return item; // Ensure each item is returned from map
@@ -104,6 +105,7 @@ class SwanTreeDataProvider {
 
     addError(label,message) {
         const error = new ErrorItem(label,message, vscode.TreeItemCollapsibleState.None);
+        console.log('Adding error:', error);
         this.errors.push(error);
         this.refresh();
     }
@@ -145,7 +147,6 @@ function activate(context) {
     vscode.window.registerTreeDataProvider('settingsView', settingsProvider);
     vscode.window.registerTreeDataProvider('errorsView', errorsProvider);
 
-
     console.log('Extension is now active!');
 
    let diagnosticCollection = vscode.languages.createDiagnosticCollection('analyzeMethods')
@@ -170,6 +171,37 @@ function activate(context) {
         }
     }
     
+    //
+    const setAnalysisSpec = vscode.commands.registerCommand("swancommands.setAnalysisSpec", () => {
+        const input = vscode.window.showInputBox({
+            prompt: "Enter the path to the Analysis Spec",
+            placeHolder: "/path/to/your/spec.json",
+            validateInput: (value) => {
+                if (!value || value.trim() === "") {
+                    return "Path cannot be empty.";
+                }
+
+                const trimmedValue = value.trim(); // Remove any extra spaces
+
+         // Check if the path contains slashes
+         if (!trimmedValue.includes("/")) {
+            return "The path must contain at least one slash ('/').";
+         }
+
+                return null;
+            }
+        });
+
+        if (input && typeof input === 'string') {
+            analysisSpecPath = input.trim(); // Update the global variable
+            vscode.window.showInformationMessage(`Analysis Spec set to: ${input}`);
+            // Optionally refresh tree views that display this info
+        }
+    })
+
+    vscode.commands.executeCommand('swancommands.setAnalysisSpec');
+
+
 const document = vscode.window.activeTextEditor.document;
     detectSwiftDocument(document)
     
@@ -197,7 +229,7 @@ const document = vscode.window.activeTextEditor.document;
             }
         });
     }
-
+/*
     const runAnalysisCommand = vscode.commands.registerCommand('swancommands.runActivityBar', (childLabel) => {
         activateActivityBarOption(childLabel);
     });
@@ -221,7 +253,7 @@ const document = vscode.window.activeTextEditor.document;
             currentModule.activate(context);
         }
     }
-
+*/
     function deactivateCurrentModule() {
         if (currentModule && currentModule.deactivate) {
             currentModule.deactivate();
@@ -262,7 +294,6 @@ const document = vscode.window.activeTextEditor.document;
          vscode.window.showInformationMessage('Running: ' + filePath);
       
          // Opens the output channel in the editor
-
             errorsProvider.addError("Error 1", "This is the first error.");
          
              // Function to find the directory containing `Package.swift`
@@ -598,7 +629,7 @@ const document = vscode.window.activeTextEditor.document;
         
                 const fileName = path.basename(filePath);
                 vscode.window.showInformationMessage('Running: ' + filePath);
-                outputChannel.show(true);
+                
                 
         
                 cp.exec(`cd ${packageSwiftDirectory} && python3 /home/abdulraheem/swanNewBuild/swan/tests/swan-spm.py`, (error, stdout, stderr) => {
@@ -880,7 +911,6 @@ const document = vscode.window.activeTextEditor.document;
             const packageSwiftDirectory = findPackageSwiftDirectory(folderPath);
 
             vscode.window.showInformationMessage('Running: ' + filePath);
-            outputChannel.show(); // Opens the output channel in the editor
     
             if (!packageSwiftDirectory) {
                 vscode.window.showInformationMessage('Could not find Package.swift in the directory hierarchy.');
@@ -1052,7 +1082,7 @@ const document = vscode.window.activeTextEditor.document;
 	});
 
 
-	context.subscriptions.push(createDebug,runAnalysisCommand,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
+	context.subscriptions.push( setAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
 }
 
 function deactivate() {
