@@ -43,7 +43,13 @@
       "title": "debug"
     },{
       "command": "swancommands.setAnalysisSpec",
-      "title": "debug"
+      "title": "set analysis spec"
+    },{
+      "command": "swancommands.removeError",
+      "title": "Remove Error"
+    },{
+      "command": " swancommands.clearErrors",
+      "title": "Remove Errors "
     }
     ],
     "viewsContainers": {
@@ -74,6 +80,14 @@
           "name": "Errors"
       }
       ]
+    },"menus": {
+        "view/item/context": [
+            {
+                "command": "swancommands.removeError",
+                "when": "view == errorsView && resource == errorItem",
+                "group": "inline"
+            }
+        ]
     }
   },
   "scripts": {

@@ -11,11 +11,76 @@ const cp = require('child_process');
 let currentModule;
 let analysisSpecPath = ""; 
 
+
+
 class ErrorItem extends vscode.TreeItem {
-    constructor(label,message, collapsibleState) {
-        // Call the parent class constructor with the label and collapsible state
-        super(label, collapsibleState);
-        this.tooltip = message; // Tooltip to show the full error message
+    constructor(label, message, urls) {
+        // Call the parent constructor with the error label
+        super(label, urls?.length > 1
+            ? vscode.TreeItemCollapsibleState.Collapsed 
+            : vscode.TreeItemCollapsibleState.None
+        );
+
+        this.tooltip = message;// Tooltip shows the error message
+        this.children = []; // Initialize the children array
+        
+
+        if (urls?.length === 1) {
+            // If there's only one URL, attach a command directly
+            this.command = this.createCommand(urls[0]);
+        } else if (urls?.length > 1){
+            // Create child items for each URL
+            this.children = urls.map((url) => this.createUrlChildItem(url));
+        }
+
+        // Attach the remove command in the context menu
+        this.contextValue = "errorItem"; // This makes it available in the context menu
+        
+        // Set the icon for the error item
+        this.iconPath = '/home/abdulraheem/extwork/swancommands/resources/28029-3-red-cross-file-thumb.png';
+
+        // Add a command when the icon is clicked (simulating a button click)
+        this.command = {
+            command: 'swancommands.removeError',
+            title: 'Remove Error',
+            arguments: [label] // Pass the error label to the removeError function
+        };
+    }
+
+    // Helper to create a child TreeItem for a URL
+    createUrlChildItem(url) {
+        const child = new vscode.TreeItem(
+            url,
+            vscode.TreeItemCollapsibleState.None // Child items are not expandable
+        );
+        child.command = this.createCommand(url); // Attach navigation command
+        child.tooltip = `Navigate to: ${url}`; // Add a tooltip for clarity
+        return child;
+    }
+
+    // Helper to create a navigation command
+    createCommand(url) {
+        let filePath, line, col;
+
+        const match = url.match(/^(.*):(\d+):(\d+)$/);
+        if (match) {
+            const [_, matchedFilePath, lineStr, colStr] = match;
+            filePath = matchedFilePath;
+            line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
+            col = parseInt(colStr, 10) - 1; 
+        } else {
+            console.error("URL format is invalid:", url);
+            return null; // Return null if the URL does not match the expected pattern
+        }
+
+        return {
+            command: "vscode.open", // VSCode's built-in file-opening command
+            title: "Open Error Location",
+            arguments: [
+                vscode.Uri.file(filePath),
+                { selection: new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col )) }
+            ]
+        };
     }
 }
 
@@ -103,10 +168,16 @@ class SwanTreeDataProvider {
         return parent;
     }
 
-    addError(label,message) {
-        const error = new ErrorItem(label,message, vscode.TreeItemCollapsibleState.None);
+    addError(label,message,urls) {
+        const error = new ErrorItem(label,message,urls);
         console.log('Adding error:', error);
         this.errors.push(error);
+        this.refresh();
+    }
+
+    removeError(label) {
+        // Remove the error with the specified label
+        this.errors = this.errors.filter((error) => error.label !== label);
         this.refresh();
     }
 
@@ -171,7 +242,7 @@ function activate(context) {
         }
     }
     
-    //
+    
     const setAnalysisSpec = vscode.commands.registerCommand("swancommands.setAnalysisSpec", () => {
         const input = vscode.window.showInputBox({
             prompt: "Enter the path to the Analysis Spec",
@@ -229,31 +300,7 @@ const document = vscode.window.activeTextEditor.document;
             }
         });
     }
-/*
-    const runAnalysisCommand = vscode.commands.registerCommand('swancommands.runActivityBar', (childLabel) => {
-        activateActivityBarOption(childLabel);
-    });
 
-    function activateActivityBarOption(selection){
-        deactivateCurrentModule();
-        if (selection === 'taintAnalysis') {
-            currentModule = runTaint;
-            currentModule.activate(context);
-        } else if (selection === 'typeStateAnalysis') {
-            currentModule = runTypestate;
-            currentModule.activate(context);
-        } else if (selection === 'callGraph') {
-            currentModule = runCallGraph;
-            currentModule.activate(context);
-        } else if (selection === 'cryptoAnalysis') {
-            currentModule = runCrypto;
-            currentModule.activate(context);
-        }else if (selection.value === 'debug') {
-            currentModule = runDebug;
-            currentModule.activate(context);
-        }
-    }
-*/
     function deactivateCurrentModule() {
         if (currentModule && currentModule.deactivate) {
             currentModule.deactivate();
@@ -276,7 +323,16 @@ const document = vscode.window.activeTextEditor.document;
         
     })
 
+    let deleteError = vscode.commands.registerCommand('swancommands.removeError', (label) => {
+        treeDataProvider.removeError(label); // Call the removeError method
+    });
 
+    let clearErrors = vscode.commands.registerCommand('swancommands.clearErrors', (label) => {
+        treeDataProvider.clearErrors(); // Call the removeError method
+    });
+
+   
+    
     const createCallGraph = vscode.commands.registerCommand('swancommands.callGraph', function () {
 		// The code you place here will be executed every time your command is executed
 		const activeEditor = vscode.window.activeTextEditor;
@@ -294,7 +350,8 @@ const document = vscode.window.activeTextEditor.document;
          vscode.window.showInformationMessage('Running: ' + filePath);
       
          // Opens the output channel in the editor
-            errorsProvider.addError("Error 1", "This is the first error.");
+     
+            errorsProvider.addError("Error 1", "This is the first error.",null);
          
              // Function to find the directory containing `Package.swift`
              function findPackageSwiftDirectory(currentPath) {
@@ -312,7 +369,6 @@ const document = vscode.window.activeTextEditor.document;
             const packageSwiftDirectory = findPackageSwiftDirectory(folderPath);
     
             if (!packageSwiftDirectory) {
-                treeDataProvider.addError('Could not find Package.swift', ' if you are in an spm project make sure you have your cursor in the file you want to analyse');
                 
                 cp.exec(`cd ${folderPath} && /home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc ${fileName}`, (error, stdout, stderr) => { 
                     if (error) {
@@ -426,7 +482,7 @@ const document = vscode.window.activeTextEditor.document;
             const packageSwiftDirectory = findPackageSwiftDirectory(folderPath);
     
             if (!packageSwiftDirectory) {
-                treeDataProvider.addError('Could not find Package.swift', ' if you are in an spm project make sure you have your cursor in the file you want to analyse');
+                
                 
                 cp.exec(`cd ${folderPath} && /home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc ${fileName}`, (error, stdout, stderr) => { 
                     if (error) {
@@ -745,14 +801,15 @@ const document = vscode.window.activeTextEditor.document;
                                                             outputChannel.appendLine('taint Results:');
                                                             outputChannel.appendLine(JSON.stringify(jsonData, null, 2));
                                                             let diagnostics = []
+                                                            let urls=[];
                                                             if(jsonData[0].paths && jsonData[0].paths.length>0){
                                                                 jsonData[0].paths[0].path.forEach((path)=>{
+                                                                    urls.push(path)
                                                                     const match = path.match(/^(.*):(\d+):(\d+)$/);
                                                                     if (match) {
                                                                       const [_, filePath, lineStr, colStr] = match;
                                                                       const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
                                                                       const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
-            
                                                                       const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
                                                                       const diagnostic = new vscode.Diagnostic(range, `taint analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
                                                                       diagnostics.push(diagnostic) 
@@ -763,6 +820,9 @@ const document = vscode.window.activeTextEditor.document;
                                                                 }
                                                                 });
                                                             }
+                                                            console.log("Calling addError with:", jsonData[0].name,jsonData[0].description,urls);
+                                                            errorsProvider.addError(jsonData[0].name,jsonData[0].description,urls); 
+                                                            console.log("just added the error")
                                                         } catch (parseErr) {
                                                             outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
                                                         }
@@ -833,9 +893,11 @@ const document = vscode.window.activeTextEditor.document;
                                                             const jsonData = JSON.parse(data);
                                                             outputChannel.appendLine('taint Results:');
                                                             outputChannel.appendLine(JSON.stringify(jsonData, null, 2));
-                                                            let diagnostics = []
+                                                            let diagnostics = [];
+                                                            let urls=[];
                                                             if(jsonData[0].paths && jsonData[0].paths.length>0){
                                                                 jsonData[0].paths[0].path.forEach((path)=>{
+                                                                urls.push(path)
                                                                     const match = path.match(/^(.*):(\d+):(\d+)$/);
                                                                     if (match) {
                                                                       const [_, filePath, lineStr, colStr] = match;
@@ -851,6 +913,13 @@ const document = vscode.window.activeTextEditor.document;
                                                                     diagnosticCollection.set(activeEditor.document.uri, diagnostics)
                                                                 }
                                                                 });
+                                                                try {
+                                                                    console.log("Calling addError with:", jsonData[0].name, jsonData[0].description, urls);
+                                                                    errorsProvider.addError(jsonData[0].name, jsonData[0].description, urls);
+                                                                    console.log("just added the error");
+                                                                } catch (err) {
+                                                                    console.error("Error while adding error to errorsProvider:", err);
+                                                                }
                                                             }
                                                         } catch (parseErr) {
                                                             outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
@@ -1082,7 +1151,7 @@ const document = vscode.window.activeTextEditor.document;
 	});
 
 
-	context.subscriptions.push( setAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
+	context.subscriptions.push(clearErrors,deleteError, setAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
 }
 
 function deactivate() {
