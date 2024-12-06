@@ -32,25 +32,43 @@
       {
         "command": "swancommands.typeStateAnalysis",
         "title": "typeStateAnalysis"
-      },{
+      },
+      {
         "command": "swancommands.Detailed Logs",
         "title": "Show Detailed Logs"
-    },{
-      "command": "swancommands.cryptoAnalysis",
-      "title": "cryptoAnalysis"
-    },{
-      "command": "swancommands.debug",
-      "title": "debug"
-    },{
-      "command": "swancommands.setAnalysisSpec",
-      "title": "set analysis spec"
-    },{
-      "command": "swancommands.removeError",
-      "title": "Remove Error"
-    },{
-      "command": " swancommands.clearErrors",
-      "title": "Remove Errors "
-    }
+      },
+      {
+        "command": "swancommands.cryptoAnalysis",
+        "title": "cryptoAnalysis"
+      },
+      {
+        "command": "swancommands.debug",
+        "title": "debug"
+      },
+      {
+        "command": "swancommands.setAnalysisSpec",
+        "title": "set analysis spec"
+      },
+      {
+        "command": "swancommands.removeError",
+        "title": "Remove Error"
+      },
+      {
+        "command": "swancommands.clearErrors",
+        "title": "Clear Errors"
+      },
+      {
+        "command": "swancommands.help",
+        "title": "Help"
+      },
+      {
+        "command": "swancommands.toggleForceCacheRead",
+        "title": "Toggle Force Cache Read"
+      },
+        {
+          "command": "swancommands.openSettings",
+          "title": "Open SWAN Settings"
+        }
     ],
     "viewsContainers": {
       "activitybar": [
@@ -66,28 +84,47 @@
         {
           "id": "runAnalysisView",
           "name": "Run Analysis"
-      },
-      {
+        },
+        {
           "id": "viewResultsView",
           "name": "View Results"
-      },
-      {
+        },
+        {
           "id": "settingsView",
           "name": "Settings"
-      },
-      {
+        },
+        {
           "id": "errorsView",
           "name": "Errors"
-      }
+        }
       ]
-    },"menus": {
-        "view/item/context": [
-            {
-                "command": "swancommands.removeError",
-                "when": "view == errorsView && resource == errorItem",
-                "group": "inline"
-            }
-        ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "swancommands.removeError",
+          "when": "view == errorsView && resource == errorItem",
+          "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "swancommands.clearErrors",
+          "when": "view == errorsView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "SWAN Extension Settings",
+      "properties": {
+        "swan.forceCacheRead": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable force cache reading (--force-cache-read)."
+        }
+      }
     }
   },
   "scripts": {

@@ -32,19 +32,6 @@ class ErrorItem extends vscode.TreeItem {
             // Create child items for each URL
             this.children = urls.map((url) => this.createUrlChildItem(url));
         }
-
-        // Attach the remove command in the context menu
-        this.contextValue = "errorItem"; // This makes it available in the context menu
-        
-        // Set the icon for the error item
-        this.iconPath = '/home/abdulraheem/extwork/swancommands/resources/28029-3-red-cross-file-thumb.png';
-
-        // Add a command when the icon is clicked (simulating a button click)
-        this.command = {
-            command: 'swancommands.removeError',
-            title: 'Remove Error',
-            arguments: [label] // Pass the error label to the removeError function
-        };
     }
 
     // Helper to create a child TreeItem for a URL
@@ -124,7 +111,8 @@ class SwanTreeDataProvider {
                     // Add the children of 'Settings' directly to the root level
                     children = children.concat(this.createParentItem("Settings", [
                         "General Settings",
-                        "Analysis spec"
+                        "Analysis spec",
+                        "Help"
                     ]).children); // Only include the children, not the parent item itself
                 }
             } else if (this.parentLabel === "Errors" && this.errors.length>0) {
@@ -161,6 +149,19 @@ class SwanTreeDataProvider {
                 item.command = {
                     command: `swancommands.setAnalysisSpec`, // Command to handle setting the spec
                     title: "Set Analysis Spec",
+                };
+            }else if (childLabel === "Help") {
+                // Show current path in description
+                item.command = {
+                    command: `swancommands.help`, // Command to handle setting the spec
+                    title: "Set Analysis Spec",
+                };
+            }
+            else if (childLabel === "General Settings") {
+                // Show current path in description
+                item.command = {
+                    command: `swancommands.openSettings`, // Command to handle setting the spec
+                    title: "open the vs code settings for the extension",
                 };
             }
             return item; // Ensure each item is returned from map
@@ -243,10 +244,11 @@ function activate(context) {
     }
     
     
-    const setAnalysisSpec = vscode.commands.registerCommand("swancommands.setAnalysisSpec", () => {
-        const input = vscode.window.showInputBox({
+    const setAnalysisSpec = vscode.commands.registerCommand("swancommands.setAnalysisSpec", async () => {
+        const input = await vscode.window.showInputBox({
             prompt: "Enter the path to the Analysis Spec",
-            placeHolder: "/path/to/your/spec.json",
+            value: analysisSpecPath ? analysisSpecPath : "", // Pre-fill with the current value if available
+            placeHolder: "/path/to/your/spec.json", // Provide a placeholder for when no value is pre-filled
             validateInput: (value) => {
                 if (!value || value.trim() === "") {
                     return "Path cannot be empty.";
@@ -263,8 +265,9 @@ function activate(context) {
             }
         });
 
-        if (input && typeof input === 'string') {
+        if (input && typeof input ==='string') {
             analysisSpecPath = input.trim(); // Update the global variable
+            settingsProvider.refresh();
             vscode.window.showInformationMessage(`Analysis Spec set to: ${input}`);
             // Optionally refresh tree views that display this info
         }
@@ -324,15 +327,53 @@ const document = vscode.window.activeTextEditor.document;
     })
 
     let deleteError = vscode.commands.registerCommand('swancommands.removeError', (label) => {
-        treeDataProvider.removeError(label); // Call the removeError method
+        errorsProvider.removeError(label); // Call the removeError method
     });
 
     let clearErrors = vscode.commands.registerCommand('swancommands.clearErrors', (label) => {
-        treeDataProvider.clearErrors(); // Call the removeError method
+        errorsProvider.clearErrors(); // Call the removeError method
     });
 
-   
+    let helpMenu = vscode.commands.registerCommand('swancommands.help', (label) => {
+        const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
+        cp.exec(`java -jar ${driverJarPath} -help`, (error, stdout, stderr) => {
+            // Handle standard output
+            if (stdout) {
+                outputChannel.append(stdout); // Append standard output to the channel
+            }
     
+            // Handle error output
+            if (stderr) {
+                outputChannel.appendLine(`stderr: ${stderr}`); // Append errors to the channel
+            }
+    
+            // Handle execution errors (e.g., command not found)
+            if (error) {
+                outputChannel.appendLine(`Error: ${error.message}`);
+            }
+        });
+    });
+   
+    vscode.commands.registerCommand('swancommands.toggleForceCacheRead', () => {
+        const config = vscode.workspace.getConfiguration();
+        const currentValue = config.get('swan.forceCacheRead');
+        config.update('swan.forceCacheRead', !currentValue, true).then(() => {
+            vscode.window.showInformationMessage(
+                `Force Cache Read is now ${!currentValue ? 'enabled' : 'disabled'}.`
+            );
+        });
+    });
+    
+    const openSettingsCommand = vscode.commands.registerCommand(
+        "swancommands.openSettings",
+        () => {
+          vscode.commands.executeCommand(
+            "workbench.action.openSettings",
+            "swan"
+          );
+        }
+      );
+
     const createCallGraph = vscode.commands.registerCommand('swancommands.callGraph', function () {
 		// The code you place here will be executed every time your command is executed
 		const activeEditor = vscode.window.activeTextEditor;
@@ -615,14 +656,14 @@ const document = vscode.window.activeTextEditor.document;
                                         } else {
                                            outputChannel.appendLine(`running the analysis on a single file`)
                                                 try {
-                                                    const resultFilePath = path.join(folderPath, 'swan-dir', 'taint-results.json');
+                                                    const resultFilePath = path.join(folderPath, 'swan-dir', 'typestate-results.json');
                                                 fs.readFile(resultFilePath, 'utf8', (err, data) => {
                                                     if (err) {
-                                                        outputChannel.appendLine(`Error reading taint-results.json: ${err.message}`);
+                                                        outputChannel.appendLine(`Error reading typestate-results.json: ${err.message}`);
                                                     } else {
                                                         try {
                                                             const jsonData = JSON.parse(data);
-                                                            outputChannel.appendLine('taint Results:');
+                                                            outputChannel.appendLine('typestate Results:');
                                                             outputChannel.appendLine(JSON.stringify(jsonData, null, 2));
                                                             let diagnostics = []
                                                             if(jsonData[0].paths && jsonData[0].paths.length>0){
@@ -634,7 +675,7 @@ const document = vscode.window.activeTextEditor.document;
                                                                       const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
             
                                                                       const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                      const diagnostic = new vscode.Diagnostic(range, `taint analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                      const diagnostic = new vscode.Diagnostic(range, `typestate analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
                                                                       diagnostics.push(diagnostic) 
                                                                     }
                                                                     const activeEditor = vscode.window.activeTextEditor;
@@ -644,7 +685,7 @@ const document = vscode.window.activeTextEditor.document;
                                                                 });
                                                             }
                                                         } catch (parseErr) {
-                                                            outputChannel.appendLine(`Error parsing taint-results.json: ${parseErr.message}`);
+                                                            outputChannel.appendLine(`Error parsing typestate-results.json: ${parseErr.message}`);
                                                         }
                                                     }
                                                 });
@@ -785,7 +826,7 @@ const document = vscode.window.activeTextEditor.document;
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} -t ${taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} -t ${analysisSpecPath? analysisSpecPath : taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
@@ -878,7 +919,7 @@ const document = vscode.window.activeTextEditor.document;
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${analysisSpecPath? analysisSpecPath : taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { //${currentValue? ' --force-cache-read':''}
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
@@ -1151,7 +1192,7 @@ const document = vscode.window.activeTextEditor.document;
 	});
 
 
-	context.subscriptions.push(clearErrors,deleteError, setAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
+	context.subscriptions.push(openSettingsCommand,helpMenu,clearErrors,deleteError, setAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
 }
 
 function deactivate() {
