@@ -9,8 +9,8 @@ const fs = require('fs');
 const cp = require('child_process');
 
 let currentModule;
-let analysisSpecPath = ""; 
-
+let taintAnalysisUserPath = ""; 
+let typestateAnalysisUserPath = '';
 
 
 class ErrorItem extends vscode.TreeItem {
@@ -111,7 +111,8 @@ class SwanTreeDataProvider {
                     // Add the children of 'Settings' directly to the root level
                     children = children.concat(this.createParentItem("Settings", [
                         "General Settings",
-                        "Analysis spec",
+                        "Taint Analysis spec",
+                        "Typestate Analysis spec",
                         "Help"
                     ]).children); // Only include the children, not the parent item itself
                 }
@@ -143,11 +144,11 @@ class SwanTreeDataProvider {
                     command: `swancommands.${childLabel}`, // Adjusting the command string
                     title: `Run ${childLabel}`, // Optional: add title for clarity
                 };
-            } else if (childLabel === "Analysis spec") {
+            } else if (childLabel === "Taint Analysis spec") {
                 // Show current path in description
-                item.description = analysisSpecPath || "No path set";
+                item.description = taintAnalysisUserPath || "No path set";
                 item.command = {
-                    command: `swancommands.setAnalysisSpec`, // Command to handle setting the spec
+                    command: `swancommands.setTaintAnalysisSpec`, // Command to handle setting the spec
                     title: "Set Analysis Spec",
                 };
             }else if (childLabel === "Help") {
@@ -162,6 +163,13 @@ class SwanTreeDataProvider {
                 item.command = {
                     command: `swancommands.openSettings`, // Command to handle setting the spec
                     title: "open the vs code settings for the extension",
+                };
+            }else if (childLabel === "Typestate Analysis spec") {
+                // Show current path in description
+                item.description = typestateAnalysisUserPath || "No path set";
+                item.command = {
+                    command: `swancommands.setTypestateAnalysisSpec`, // Command to handle setting the spec
+                    title: "Set Analysis Spec",
                 };
             }
             return item; // Ensure each item is returned from map
@@ -243,11 +251,20 @@ function activate(context) {
         }
     }
     
+    const config = vscode.workspace.getConfiguration("swan");
+    taintAnalysisUserPath = config.get("taintAnalysisSpecPath", "");
     
-    const setAnalysisSpec = vscode.commands.registerCommand("swancommands.setAnalysisSpec", async () => {
+    const setTaintAnalysisSpec = vscode.commands.registerCommand("swancommands.setTaintAnalysisSpec", async () => {
+      
+        // Get the current configuration object for your extension
+    const config = vscode.workspace.getConfiguration("swan");
+
+    // Retrieve the current path from settings
+    const currentPath = config.get("taintAnalysisSpecPath", "");
+        
         const input = await vscode.window.showInputBox({
             prompt: "Enter the path to the Analysis Spec",
-            value: analysisSpecPath ? analysisSpecPath : "", // Pre-fill with the current value if available
+            value: taintAnalysisUserPath ? taintAnalysisUserPath : "", // Pre-fill with the current value if available
             placeHolder: "/path/to/your/spec.json", // Provide a placeholder for when no value is pre-filled
             validateInput: (value) => {
                 if (!value || value.trim() === "") {
@@ -266,15 +283,56 @@ function activate(context) {
         });
 
         if (input && typeof input ==='string') {
-            analysisSpecPath = input.trim(); // Update the global variable
+            const trimmedInput = input.trim();
+
+        // Update the global variable
+        taintAnalysisUserPath = trimmedInput;
+
+        // Update the settings
+        const config = vscode.workspace.getConfiguration("swan");
+        await config.update("taintAnalysisSpecPath", trimmedInput, vscode.ConfigurationTarget.Global);
+        settingsProvider.refresh();
+        vscode.window.showInformationMessage(`Taint Analysis Spec path set to: ${trimmedInput}`);
+        }
+    })
+
+    // Listen for configuration changes
+    vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration("swan.taintAnalysisSpecPath")) {
+            taintAnalysisUserPath = config.get("taintAnalysisSpecPath", "");
+            settingsProvider.refresh();
+            vscode.window.showInformationMessage(`Taint Analysis Spec path updated to: ${taintAnalysisUserPath}`);
+        }
+    });
+
+    const setTypestateAnalysisSpec = vscode.commands.registerCommand("swancommands.setTypestateAnalysisSpec", async () => {
+        const input = await vscode.window.showInputBox({
+            prompt: "Enter the path to the Analysis Spec",
+            value: typestateAnalysisUserPath ? typestateAnalysisUserPath : "", // Pre-fill with the current value if available
+            placeHolder: "/path/to/your/spec.json", // Provide a placeholder for when no value is pre-filled
+            validateInput: (value) => {
+                if (!value || value.trim() === "") {
+                    return "Path cannot be empty.";
+                }
+
+                const trimmedValue = value.trim(); // Remove any extra spaces
+
+         // Check if the path contains slashes
+         if (!trimmedValue.includes("/")) {
+            return "The path must contain at least one slash ('/').";
+         }
+
+                return null;
+            }
+        });
+
+        if (input && typeof input ==='string') {
+            typestateAnalysisUserPath = input.trim(); // Update the global variable
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Analysis Spec set to: ${input}`);
             // Optionally refresh tree views that display this info
         }
     })
-
-    vscode.commands.executeCommand('swancommands.setAnalysisSpec');
-
 
 const document = vscode.window.activeTextEditor.document;
     detectSwiftDocument(document)
@@ -826,7 +884,7 @@ const document = vscode.window.activeTextEditor.document;
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} -t ${analysisSpecPath? analysisSpecPath : taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} -t ${taintAnalysisUserPath? taintAnalysisUserPath : taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
@@ -919,7 +977,7 @@ const document = vscode.window.activeTextEditor.document;
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${analysisSpecPath? analysisSpecPath : taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { //${currentValue? ' --force-cache-read':''}
+                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${taintAnalysisUserPath? taintAnalysisUserPath : taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { //${currentValue? ' --force-cache-read':''}
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
@@ -1192,7 +1250,7 @@ const document = vscode.window.activeTextEditor.document;
 	});
 
 
-	context.subscriptions.push(openSettingsCommand,helpMenu,clearErrors,deleteError, setAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
+	context.subscriptions.push(openSettingsCommand,helpMenu,clearErrors,deleteError,setTypestateAnalysisSpec, setTaintAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
 }
 
 function deactivate() {

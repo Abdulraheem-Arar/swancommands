@@ -46,8 +46,8 @@
         "title": "debug"
       },
       {
-        "command": "swancommands.setAnalysisSpec",
-        "title": "set analysis spec"
+        "command": "swancommands.setTaintAnalysisSpec",
+        "title": "set taint analysis spec"
       },
       {
         "command": "swancommands.removeError",
@@ -68,6 +68,9 @@
         {
           "command": "swancommands.openSettings",
           "title": "Open SWAN Settings"
+        }, {
+          "command": "swancommands.setTypestateAnalysisSpec",
+          "title": "set typestate analysis spec"
         }
     ],
     "viewsContainers": {
@@ -116,16 +119,26 @@
       ]
     },
     "configuration": {
-      "type": "object",
-      "title": "SWAN Extension Settings",
-      "properties": {
-        "swan.forceCacheRead": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable force cache reading (--force-cache-read)."
-        }
-      }
+  "type": "object",
+  "title": "SWAN Extension Settings",
+  "properties": {
+    "swan.forceCacheRead": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable force cache reading (--force-cache-read)."
+    },
+    "swan.taintAnalysisSpecPath": {
+      "type": "string",
+      "default": "",
+      "description": "Path to the Taint Analysis Spec file."
+    },
+    "swan.typestateAnalysisSpecPath": {
+      "type": "string",
+      "default": "",
+      "description": "Path to the Typestate Analysis Spec file."
     }
+  }
+}
   },
   "scripts": {
     "lint": "eslint .",
