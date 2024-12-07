@@ -71,6 +71,10 @@
         }, {
           "command": "swancommands.setTypestateAnalysisSpec",
           "title": "set typestate analysis spec"
+        },
+        {
+          "command": "swancommands.defaults",
+          "title": "set typestate analysis spec"
         }
     ],
     "viewsContainers": {
