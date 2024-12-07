@@ -1,7 +1,7 @@
 {
   "name": "swancommands",
   "displayName": "swanCommands",
-  "description": "this is an extesnsion built to allow you to run swan commands in the command palette ",
+  "description": "this is an extension built to allow you to run swan commands in the command palette",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.94.0"
@@ -9,23 +9,140 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onLanguage:swift"],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "swancommands.helloWorld",
-      "title": "Hello World"
+    "commands": [
+      {
+        "command": "swancommands.menu",
+        "title": "analysis options"
+      },
+      {
+        "command": "swancommands.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "swancommands.callGraph",
+        "title": "callGraph"
+      },
+      {
+        "command": "swancommands.taintAnalysis",
+        "title": "taintAnalysis"
+      },
+      {
+        "command": "swancommands.typeStateAnalysis",
+        "title": "typeStateAnalysis"
+      },
+      {
+        "command": "swancommands.Detailed Logs",
+        "title": "Show Detailed Logs"
+      },
+      {
+        "command": "swancommands.cryptoAnalysis",
+        "title": "cryptoAnalysis"
+      },
+      {
+        "command": "swancommands.debug",
+        "title": "debug"
+      },
+      {
+        "command": "swancommands.setTaintAnalysisSpec",
+        "title": "set taint analysis spec"
+      },
+      {
+        "command": "swancommands.removeError",
+        "title": "Remove Error"
+      },
+      {
+        "command": "swancommands.clearErrors",
+        "title": "Clear Errors"
+      },
+      {
+        "command": "swancommands.help",
+        "title": "Help"
+      },
+      {
+        "command": "swancommands.toggleForceCacheRead",
+        "title": "Toggle Force Cache Read"
+      },
+        {
+          "command": "swancommands.openSettings",
+          "title": "Open SWAN Settings"
+        }, {
+          "command": "swancommands.setTypestateAnalysisSpec",
+          "title": "set typestate analysis spec"
+        },
+        {
+          "command": "swancommands.defaults",
+          "title": "set typestate analysis spec"
+        }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "swanActivityContainer",
+          "title": "Swan",
+          "icon": "resources/SWAN Logo HIRES Transparent.png"
+        }
+      ]
     },
-  {
-   "command": "swancommands.callGraph",
-      "title": "callGraph"
-  },{
-     "command": "swancommands.taintAnalysis",
-      "title": "taintAnalysis"
-  },{
-    "command": "swancommands.typeStateAnalysis",
-     "title": "typeStateAnalysis"
- }]
+    "views": {
+      "swanActivityContainer": [
+        {
+          "id": "runAnalysisView",
+          "name": "Run Analysis"
+        },
+        {
+          "id": "viewResultsView",
+          "name": "View Results"
+        },
+        {
+          "id": "settingsView",
+          "name": "Settings"
+        },
+        {
+          "id": "errorsView",
+          "name": "Errors"
+        }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "swancommands.removeError",
+          "when": "view == errorsView && resource == errorItem",
+          "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "swancommands.clearErrors",
+          "when": "view == errorsView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+  "type": "object",
+  "title": "SWAN Extension Settings",
+  "properties": {
+    "swan.forceCacheRead": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable force cache reading (--force-cache-read)."
+    },
+    "swan.taintAnalysisSpecPath": {
+      "type": "string",
+      "default": "",
+      "description": "Path to the Taint Analysis Spec file."
+    },
+    "swan.typestateAnalysisSpecPath": {
+      "type": "string",
+      "default": "",
+      "description": "Path to the Typestate Analysis Spec file."
+    }
+  }
+}
   },
   "scripts": {
     "lint": "eslint .",
