@@ -9,7 +9,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": ["onLanguage:swift"],
+  "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
     "commands": [

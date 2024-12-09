@@ -372,13 +372,20 @@ function activate(context) {
             typestateAnalysisUserPath = config.get("typestateAnalysisSpecPath", "");
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Typestate Analysis Spec path updated to: ${typestateAnalysisUserPath}`);
+        } else if (event.affectsConfiguration("swan.forceCacheRead")) {
+            const config = vscode.workspace.getConfiguration("swan");
+            const boolForceCache = config.get("forceCacheRead", "");
+            vscode.window.showInformationMessage(`force cache read updated to: ${boolForceCache}`);
         }
     });
 
 
-    const document = vscode.window.activeTextEditor.document;
-    detectSwiftDocument(document)
+    let activeEditor = vscode.window.activeTextEditor;
+    if(activeEditor){
+        detectSwiftDocument(activeEditor.document)
     
+    }
+   
     function showAnalysisOptions() {
         vscode.window.showQuickPick(analysisOptions, { placeHolder: 'Select an analysis option' }).then(selection => {
             if (selection) {
@@ -454,7 +461,8 @@ function activate(context) {
         });
     });
    
-    vscode.commands.registerCommand('swancommands.toggleForceCacheRead', () => {
+   
+   /* vscode.commands.registerCommand('swancommands.toggleForceCacheRead', () => {
         const config = vscode.workspace.getConfiguration();
         const currentValue = config.get('swan.forceCacheRead');
         config.update('swan.forceCacheRead', !currentValue, true).then(() => {
@@ -463,7 +471,8 @@ function activate(context) {
             );
         });
     });
-    
+    */
+
     const openSettingsCommand = vscode.commands.registerCommand(
         "swancommands.openSettings",
         () => {
@@ -1019,7 +1028,7 @@ function activate(context) {
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${taintAnalysisUserPath? taintAnalysisUserPath : taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { //${currentValue? ' --force-cache-read':''}
+                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${taintAnalysisUserPath? taintAnalysisUserPath : taintAnalysisPath} swan-dir/ ${boolForceCache? ' --force-cache-read':''}`, (error, stdout, stderr) => { 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
