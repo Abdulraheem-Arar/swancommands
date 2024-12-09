@@ -242,23 +242,34 @@ function activate(context) {
     function resetSettingsToDefaults() {
         const config = vscode.workspace.getConfiguration('swan');
     
-        // Default values
+        // Default values for all settings
         const defaults = {
             'forceCacheRead': false,
+            'debug': false,
+            'callGraph': false,
+            'invalidateCache': false,
+            'names': false,
+            'dot': false,
+            'probe': false,
+            'single': false,
             'taintAnalysisSpecPath': '',
             'typestateAnalysisSpecPath': ''
         };
-
-        // let taintAnalysisUserPath = ""; 
-       // let typestateAnalysisUserPath = '';
+    
         // Reset each setting to its default value
         for (const [key, defaultValue] of Object.entries(defaults)) {
-            config.update(key, defaultValue, vscode.ConfigurationTarget.Global);
+            config.update(key, defaultValue, vscode.ConfigurationTarget.Global)
+                .then(() => {
+                    console.log(`Reset ${key} to its default value: ${defaultValue}`);
+                })
+                .catch((err) => {
+                    console.error(`Error resetting ${key}: ${err}`);
+                });
         }
-    settingsProvider.refresh();
+        settingsProvider.refresh();
+    
         vscode.window.showInformationMessage('SWAN settings have been reset to their default values.');
     }
-
     const resetToDefaultSettings = vscode.commands.registerCommand('swancommands.defaults', function () {
         resetSettingsToDefaults();
     })
@@ -362,20 +373,39 @@ function activate(context) {
     })
     // Listen for configuration changes
     vscode.workspace.onDidChangeConfiguration((event) => {
+        const config = vscode.workspace.getConfiguration("swan");
         if (event.affectsConfiguration("swan.taintAnalysisSpecPath")) {
-            const config = vscode.workspace.getConfiguration("swan");
             taintAnalysisUserPath = config.get("taintAnalysisSpecPath", "");
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Taint Analysis Spec path updated to: ${taintAnalysisUserPath}`);
         } else if (event.affectsConfiguration("swan.typestateAnalysisSpecPath")) {
-            const config = vscode.workspace.getConfiguration("swan");
             typestateAnalysisUserPath = config.get("typestateAnalysisSpecPath", "");
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Typestate Analysis Spec path updated to: ${typestateAnalysisUserPath}`);
         } else if (event.affectsConfiguration("swan.forceCacheRead")) {
-            const config = vscode.workspace.getConfiguration("swan");
             const boolForceCache = config.get("forceCacheRead", "");
             vscode.window.showInformationMessage(`force cache read updated to: ${boolForceCache}`);
+        }  else if (event.affectsConfiguration("swan.debug")) {
+            const boolDebug = config.get("debug", false);
+            vscode.window.showInformationMessage(`Debug updated to: ${boolDebug}`);
+        } else if (event.affectsConfiguration("swan.callGraph")) {
+            const boolCallGraph = config.get("callGraph", false);
+            vscode.window.showInformationMessage(`Call Graph updated to: ${boolCallGraph}`);
+        } else if (event.affectsConfiguration("swan.invalidateCache")) {
+            const boolInvalidateCache = config.get("invalidateCache", false);
+            vscode.window.showInformationMessage(`Invalidate Cache updated to: ${boolInvalidateCache}`);
+        } else if (event.affectsConfiguration("swan.names")) {
+            const boolNames = config.get("names", false);
+            vscode.window.showInformationMessage(`Names updated to: ${boolNames}`);
+        } else if (event.affectsConfiguration("swan.dot")) {
+            const boolDot = config.get("dot", false);
+            vscode.window.showInformationMessage(`DOT updated to: ${boolDot}`);
+        } else if (event.affectsConfiguration("swan.probe")) {
+            const boolProbe = config.get("probe", false);
+            vscode.window.showInformationMessage(`Probe updated to: ${boolProbe}`);
+        } else if (event.affectsConfiguration("swan.single")) {
+            const boolSingle = config.get("single", false);
+            vscode.window.showInformationMessage(`Single-Threaded Execution updated to: ${boolSingle}`);
         }
     });
 

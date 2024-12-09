@@ -65,17 +65,18 @@
         "command": "swancommands.toggleForceCacheRead",
         "title": "Toggle Force Cache Read"
       },
-        {
-          "command": "swancommands.openSettings",
-          "title": "Open SWAN Settings"
-        }, {
-          "command": "swancommands.setTypestateAnalysisSpec",
-          "title": "set typestate analysis spec"
-        },
-        {
-          "command": "swancommands.defaults",
-          "title": "set typestate analysis spec"
-        }
+      {
+        "command": "swancommands.openSettings",
+        "title": "Open SWAN Settings"
+      },
+      {
+        "command": "swancommands.setTypestateAnalysisSpec",
+        "title": "set typestate analysis spec"
+      },
+      {
+        "command": "swancommands.defaults",
+        "title": "set typestate analysis spec"
+      }
     ],
     "viewsContainers": {
       "activitybar": [
@@ -123,26 +124,61 @@
       ]
     },
     "configuration": {
-  "type": "object",
-  "title": "SWAN Extension Settings",
-  "properties": {
-    "swan.forceCacheRead": {
-      "type": "boolean",
-      "default": false,
-      "description": "Enable force cache reading (--force-cache-read)."
-    },
-    "swan.taintAnalysisSpecPath": {
-      "type": "string",
-      "default": "",
-      "description": "Path to the Taint Analysis Spec file."
-    },
-    "swan.typestateAnalysisSpecPath": {
-      "type": "string",
-      "default": "",
-      "description": "Path to the Typestate Analysis Spec file."
+      "type": "object",
+      "title": "SWAN Extension Settings",
+      "properties": {
+        "swan.forceCacheRead": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable force cache reading (--force-cache-read)."
+        },
+        "swan.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Dump IRs and changed partial files to the debug directory (--debug)."
+        },
+        "swan.callGraph": {
+          "type": "boolean",
+          "default": false,
+          "description": "Construct the Call Graph (--call-graph)."
+        },
+        "swan.invalidateCache": {
+          "type": "boolean",
+          "default": false,
+          "description": "Invalidate the cache (--invalidate-cache)."
+        },
+        "swan.names": {
+          "type": "boolean",
+          "default": false,
+          "description": "Dump function names to the debug directory (--names)."
+        },
+        "swan.dot": {
+          "type": "boolean",
+          "default": false,
+          "description": "Output Call Graph in DOT format (--dot)."
+        },
+        "swan.probe": {
+          "type": "boolean",
+          "default": false,
+          "description": "Output probe Call Graph (--probe)."
+        },
+        "swan.single": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force single-threaded execution (--single)."
+        },
+        "swan.taintAnalysisSpecPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Taint Analysis Spec file (--taint-analysis-spec=<path>)."
+        },
+        "swan.typestateAnalysisSpecPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Typestate Analysis Spec file (--typestate-analysis-spec=<path>)."
+        }
+      }
     }
-  }
-}
   },
   "scripts": {
     "lint": "eslint .",
