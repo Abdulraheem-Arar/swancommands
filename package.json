@@ -176,7 +176,18 @@
           "type": "string",
           "default": "",
           "description": "Path to the Typestate Analysis Spec file (--typestate-analysis-spec=<path>)."
-        }
+        },
+            "swan.swiftcPath": {
+              "type": "string",
+              "default": "",
+              "description": "Path to the swan-swiftc file on your device"
+            },
+            "swan.driver": {
+              "type": "string",
+              "default": "",
+              "description": "Path to the driver.jar file on your device"
+            }
+       
       }
     }
   },

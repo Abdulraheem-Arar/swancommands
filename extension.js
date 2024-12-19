@@ -335,9 +335,6 @@ function activate(context) {
     })
     
     const setTypestateAnalysisSpec = vscode.commands.registerCommand("swancommands.setTypestateAnalysisSpec", async () => {
-      
-      
-        
         const input = await vscode.window.showInputBox({
             prompt: "Enter the path to the Analysis Spec",
             value: typestateAnalysisUserPath ? typestateAnalysisUserPath : "", // Pre-fill with the current value if available
@@ -406,9 +403,43 @@ function activate(context) {
         } else if (event.affectsConfiguration("swan.single")) {
             const boolSingle = config.get("single", false);
             vscode.window.showInformationMessage(`Single-Threaded Execution updated to: ${boolSingle}`);
-        }
+        } else if (event.affectsConfiguration('swan.swiftcPath')) {
+              validatePath('swiftc');
+        } else if (event.affectsConfiguration('swan.driver')) {
+            validatePath('driver');
+      }
+        
     });
 
+    
+function validatePath(type) {
+  const config = vscode.workspace.getConfiguration('swan');
+  console.log('I am being called')
+  let Path='';
+  if (type === "swiftc"){
+    Path = config.get('swiftcPath',"");
+  } else if (type ==="driver"){
+    Path = config.get('driver',"");
+  }
+
+console.log(`the path inputted is ${Path}` )
+
+    if (!Path || Path.trim() === "") {
+        vscode.window.showErrorMessage('Path cannot be empty please input the correct path');
+    }
+
+    const trimmedValue = Path.trim(); // Remove any extra spaces
+
+   // Check if the path contains slashes
+    if (!trimmedValue.includes("/")) {
+    vscode.window.showErrorMessage("The path must contain at least one slash ('/')"); 
+   } 
+
+   if (Path && typeof Path ==='string') {
+    const trimmedInput = Path.trim();
+   }
+}
+    
 
     let activeEditor = vscode.window.activeTextEditor;
     if(activeEditor){
@@ -922,7 +953,7 @@ function activate(context) {
 		const activeEditor = vscode.window.activeTextEditor;
         const swiftcPath = '/home/abdulraheem/buildingSwan/swan/lib/swan-swiftc'
         const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
-         const taintAnalysisPath = '/home/abdulraheem/swanNewBuild/swan/specifications/examples/taint.json'
+         const taintAnalysisPath = '/home/abdulraheem/codeForMeeting/swancommands/specifications/taint.json'
 		// Display a message box to the user
         if (activeEditor) {
             const filePath = activeEditor.document.fileName;
@@ -1058,7 +1089,7 @@ function activate(context) {
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${taintAnalysisUserPath? taintAnalysisUserPath : taintAnalysisPath} swan-dir/ ${boolForceCache? ' --force-cache-read':''}`, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} -t ${taintAnalysisUserPath? taintAnalysisUserPath : taintAnalysisPath} swan-dir/ `, (error, stdout, stderr) => { 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
