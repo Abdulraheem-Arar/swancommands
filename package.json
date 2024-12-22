@@ -50,10 +50,6 @@
         "title": "set taint analysis spec"
       },
       {
-        "command": "swancommands.removeError",
-        "title": "Remove Error"
-      },
-      {
         "command": "swancommands.clearErrors",
         "title": "Clear Errors"
       },
