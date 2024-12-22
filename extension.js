@@ -3,7 +3,6 @@ const runCallGraph = require('./callgraph');
 const runTypestate = require('./typestateanalysis');
 const runTaint = require('./taintanalysis');
 const runCrypto = require('./cryptoanalysis');
-const runDebug = require('./debug');
 const treeItems = require('./treeItems');
 const path = require('path');
 const fs = require('fs');
@@ -76,7 +75,6 @@ function activate(context) {
         { label: 'run typestate analysis on your current code file', value: 'typestate' },
         { label: 'create the call graph for your current code file', value: 'callgraph' },
         { label: "analyze the use of crypto API's", value: 'crypto' },
-        { label: "create the debug files in the swan-dir/", value: 'debug' },
     ];
 
     const disposable = vscode.commands.registerCommand('swancommands.menu', function () {
@@ -94,7 +92,7 @@ function activate(context) {
     const setAnalysisSpec = vscode.commands.registerCommand("swancommands.setAnalysisPath", async (context) => {
       console.log('updating the path to taint analysis')
     
-      let Path = '';
+        let Path = '';
         if (context==='taint'){
             Path = sharedState.taintAnalysisUserPath ? sharedState.taintAnalysisUserPath : "";
         } else if (context==='typestate'){
@@ -246,9 +244,6 @@ console.log(`the path inputted is ${Path}` )
                     currentModule.activate(context);
                 } else if (selection.value === 'crypto') {
                     currentModule = runCrypto;
-                    currentModule.activate(context);
-                }else if (selection.value === 'debug') {
-                    currentModule = runDebug;
                     currentModule.activate(context);
                 }
             }
@@ -435,123 +430,6 @@ console.log(`the path inputted is ${Path}` )
         }
 		vscode.window.showInformationMessage('Hello World from swift detect 3!');
 	});
-
-    const createDebug = vscode.commands.registerCommand('swancommands.debug', function () {
-		// The code you place here will be executed every time your command is executed
-		const activeEditor = vscode.window.activeTextEditor;
-        const swiftcPath = '/home/abdulraheem/buildingSwan/swan/lib/swan-swiftc'
-        const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
-		// Display a message box to the user
-
-
-        if (activeEditor) {
-            const filePath = activeEditor.document.fileName;
-            const folderPath = path.dirname(filePath);
-            const fileName = path.basename(filePath);
-
-         // Show a message that the file is running
-         vscode.window.showInformationMessage('Running: ' + filePath);
-      
-         // Opens the output channel in the editor
-
-
-         
-             // Function to find the directory containing `Package.swift`
-             function findPackageSwiftDirectory(currentPath) {
-                const packageSwiftPath = path.join(currentPath, 'Package.swift');
-                if (fs.existsSync(packageSwiftPath)) {
-                    return currentPath; // Found the directory
-                }
-                const parentPath = path.dirname(currentPath);
-                if (parentPath === currentPath) {
-                    return null; // Reached the root directory
-                }
-                return findPackageSwiftDirectory(parentPath); // Recursively search the parent directory
-            }
-    
-            const packageSwiftDirectory = findPackageSwiftDirectory(folderPath);
-    
-            if (!packageSwiftDirectory) {
-                
-                
-                cp.exec(`cd ${folderPath} && /home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc ${fileName}`, (error, stdout, stderr) => { 
-                    if (error) {
-                        outputChannel.appendLine(`Error: running swftc ${stderr}`);
-                    } else{
-                        setTimeout(() => {
-                            fs.readdir(`${folderPath}/swan-dir`, (err, files) => {
-                                if (err) outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
-                                else outputChannel.appendLine(`Files in swan-dir: ${files.join(', ')}`);
-                                
-                                // Proceed with the command only if files are present
-                                if (files.length > 0) {
-                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} swan-dir/ -d`, (error, stdout, stderr) => { 
-                                        if (error) {
-                                            outputChannel.appendLine(`Error: running driver.jar ${stderr}`);
-                                        } else {
-                                            outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
-                                        }
-                                    });
-                                } else {
-                                    outputChannel.appendLine("No files found in swan-dir after timeout.");
-                                }
-                            });
-                        }, 1000);
-                    }
-                });
-            } else{
-                const buildFolderPath = path.join(packageSwiftDirectory, '.build');
-
-            
-                if (fs.existsSync(buildFolderPath)) {
-                    fs.rm(buildFolderPath, { recursive: true, force: true }, (err) => {
-                        if (err) {
-                            console.error('Error removing .build folder:', err);
-                        } else {
-                            console.log('.build folder removed successfully.');
-                        }
-                    });
-                } else {
-                    console.log('.build folder does not exist in:', buildFolderPath);
-                }
-                vscode.window.showInformationMessage(`Package.swift found at: ${packageSwiftDirectory}`);
-    
-                
-               
-              cp.exec(`cd ${packageSwiftDirectory} && python3 /home/abdulraheem/swanNewBuild/swan/tests/swan-spm.py`, (error, stdout, stderr) => { 
-                    if (error) {
-                        outputChannel.appendLine(`Error: running swftc ${stderr}`);
-                    } else{
-                        setTimeout(() => {
-                            fs.readdir(`${packageSwiftDirectory}/swan-dir`, (err, files) => {
-                                if (err) outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
-                                else outputChannel.appendLine(`Files in swan-dir: ${files.join(', ')}`);
-                                
-                                // Proceed with the command only if files are present
-                                if (files.length > 0) {
-                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} swan-dir/ -d`, (error, stdout, stderr) => { 
-                                        if (error) {
-                                            outputChannel.appendLine(`Error: running driver.jar ${stderr}`);
-                                        } else {
-                                            outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
-                                        }
-                                    });
-                                } else {
-                                    outputChannel.appendLine("No files found in swan-dir after timeout.");
-                                }
-                            });
-                        }, 1000);
-                    }
-                });
-            }       
-        } else {
-            vscode.window.showWarningMessage('No active editor with an open file.');
-        }
-		vscode.window.showInformationMessage('Hello World from swift detect 3!');
-	});
-
-
-
 
     const runTypeStateAnalysis = vscode.commands.registerCommand('swancommands.typeStateAnalysis', function () {
         const activeEditor = vscode.window.activeTextEditor;
@@ -1137,7 +1015,7 @@ console.log(`the path inputted is ${Path}` )
 	});
 
 
-	context.subscriptions.push(resetToDefaultSettings,openSettingsCommand, helpMenu ,clearErrors,setAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
+	context.subscriptions.push(resetToDefaultSettings,openSettingsCommand, helpMenu ,clearErrors,setAnalysisSpec,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
 }
 
 function deactivate() {
