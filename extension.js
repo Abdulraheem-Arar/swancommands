@@ -91,13 +91,20 @@ function activate(context) {
         }
     }
     
-    const setTaintAnalysisSpec = vscode.commands.registerCommand("swancommands.setTaintAnalysisSpec", async () => {
+    const setAnalysisSpec = vscode.commands.registerCommand("swancommands.setAnalysisPath", async (context) => {
       console.log('updating the path to taint analysis')
     
+      let Path = '';
+        if (context==='taint'){
+            Path = sharedState.taintAnalysisUserPath ? sharedState.taintAnalysisUserPath : "";
+        } else if (context==='typestate'){
+        Path = sharedState.typestateAnalysisUserPath ? sharedState.typestateAnalysisUserPath : ""
+        }    
         
         const input = await vscode.window.showInputBox({
             prompt: "Enter the path to the Analysis Spec",
-            value: sharedState.taintAnalysisUserPath ? sharedState.taintAnalysisUserPath : "", // Pre-fill with the current value if available
+            value: Path,
+             // Pre-fill with the current value if available
             placeHolder: "/path/to/your/spec.json", // Provide a placeholder for when no value is pre-filled
             validateInput: (value) => {
                 if (!value || value.trim() === "") {
@@ -119,50 +126,27 @@ function activate(context) {
             const trimmedInput = input.trim();
 
         // Update the global variable
-        sharedState.taintAnalysisUserPath = trimmedInput;
+        if (context === 'taint'){
+            sharedState.taintAnalysisUserPath = trimmedInput;
+        } else if (context ==='typestate'){
+            sharedState.typestateAnalysisUserPath = trimmedInput;
+        }
 
         // Update the settings
         const config = vscode.workspace.getConfiguration("swan");
-        await config.update("taintAnalysisSpecPath", trimmedInput, vscode.ConfigurationTarget.Global);
+        if (context === 'taint'){
+            await config.update("taintAnalysisSpecPath", trimmedInput, vscode.ConfigurationTarget.Global);
         settingsProvider.refresh();
         vscode.window.showInformationMessage(`Taint Analysis Spec path set to: ${trimmedInput}`);
-        }
-    })
-    
-    const setTypestateAnalysisSpec = vscode.commands.registerCommand("swancommands.setTypestateAnalysisSpec", async () => {
-        const input = await vscode.window.showInputBox({
-            prompt: "Enter the path to the Analysis Spec",
-            value: sharedState.typestateAnalysisUserPath ? sharedState.typestateAnalysisUserPath : "", // Pre-fill with the current value if available
-            placeHolder: "/path/to/your/spec.json", // Provide a placeholder for when no value is pre-filled
-            validateInput: (value) => {
-                if (!value || value.trim() === "") {
-                    return "Path cannot be empty.";
-                }
-
-                const trimmedValue = value.trim(); // Remove any extra spaces
-
-         // Check if the path contains slashes
-         if (!trimmedValue.includes("/")) {
-            return "The path must contain at least one slash ('/').";
-         }
-
-                return null;
-            }
-        });
-
-        if (input && typeof input ==='string') {
-            const trimmedInput = input.trim();
-
-        // Update the global variable
-        sharedState.typestateAnalysisUserPath = trimmedInput;
-
-        // Update the settings
-        const config = vscode.workspace.getConfiguration("swan");
-        await config.update("typestateAnalysisSpecPath", trimmedInput, vscode.ConfigurationTarget.Global);
+        } else if (context ==='typestate'){
+            await config.update("typestateAnalysisSpecPath", trimmedInput, vscode.ConfigurationTarget.Global);
         settingsProvider.refresh();
         vscode.window.showInformationMessage(`Typestate Analysis Spec path set to: ${trimmedInput}`);
         }
+       
+        }
     })
+
     // Listen for configuration changes
     vscode.workspace.onDidChangeConfiguration((event) => {
         const config = vscode.workspace.getConfiguration("swan");
@@ -294,7 +278,7 @@ console.log(`the path inputted is ${Path}` )
     })
 
     const clearErrors = vscode.commands.registerCommand('swancommands.clearErrors', (label) => {
-        errorsProvider.clearErrors(); // Call the removeError method
+        errorsProvider.clearErrors(); // Call the clear error method
     });
 
     const helpMenu = vscode.commands.registerCommand('swancommands.help', (label) => {
@@ -1153,7 +1137,7 @@ console.log(`the path inputted is ${Path}` )
 	});
 
 
-	context.subscriptions.push(resetToDefaultSettings,openSettingsCommand, helpMenu ,clearErrors,deleteError,setTypestateAnalysisSpec, setTaintAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
+	context.subscriptions.push(resetToDefaultSettings,openSettingsCommand, helpMenu ,clearErrors,setAnalysisSpec,createDebug,runCryptoAnalysis,showOutputChannel,runTaintAnalysis,runTypeStateAnalysis,createCallGraph,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
 }
 
 function deactivate() {

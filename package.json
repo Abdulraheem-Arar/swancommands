@@ -46,8 +46,8 @@
         "title": "debug"
       },
       {
-        "command": "swancommands.setTaintAnalysisSpec",
-        "title": "set taint analysis spec"
+        "command": "swancommands.setAnalysisPath",
+        "title": "set the analysis spec"
       },
       {
         "command": "swancommands.clearErrors",
@@ -64,10 +64,6 @@
       {
         "command": "swancommands.openSettings",
         "title": "Open SWAN Settings"
-      },
-      {
-        "command": "swancommands.setTypestateAnalysisSpec",
-        "title": "set typestate analysis spec"
       },
       {
         "command": "swancommands.defaults",
@@ -104,13 +100,6 @@
       ]
     },
     "menus": {
-      "view/item/context": [
-        {
-          "command": "swancommands.removeError",
-          "when": "view == errorsView && resource == errorItem",
-          "group": "inline"
-        }
-      ],
       "view/title": [
         {
           "command": "swancommands.clearErrors",

@@ -139,8 +139,9 @@ class SwanTreeDataProvider {
                 // Show current path in description
                 item.description = sharedState.taintAnalysisUserPath || "No path set";
                 item.command = {
-                    command: `swancommands.setTaintAnalysisSpec`, // Command to handle setting the spec
+                    command: `swancommands.setAnalysisPath`, // Command to handle setting the spec
                     title: "Set Analysis Spec",
+                    arguments: ['taint']
                 };
             }else if (childLabel === "Help") {
                 // Show current path in description
@@ -159,8 +160,9 @@ class SwanTreeDataProvider {
                 // Show current path in description
                 item.description = sharedState.typestateAnalysisUserPath || "No path set";
                 item.command = {
-                    command: `swancommands.setTypestateAnalysisSpec`, // Command to handle setting the spec
+                    command: `swancommands.setAnalysisPath`, // Command to handle setting the spec
                     title: "Set Analysis Spec",
+                    arguments: ['typestate']
                 };
             }else if (childLabel === "Reset settings to defaults") {
                 // Show current path in description
@@ -178,12 +180,6 @@ class SwanTreeDataProvider {
         const error = new ErrorItem(label,message,urls);
         console.log('Adding error:', error);
         this.errors.push(error);
-        this.refresh();
-    }
-
-    removeError(label) {
-        // Remove the error with the specified label
-        this.errors = this.errors.filter((error) => error.label !== label);
         this.refresh();
     }
 
