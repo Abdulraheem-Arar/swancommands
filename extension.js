@@ -405,8 +405,10 @@ function activate(context) {
             vscode.window.showInformationMessage(`Single-Threaded Execution updated to: ${boolSingle}`);
         } else if (event.affectsConfiguration('swan.swiftcPath')) {
               validatePath('swiftc');
-        } else if (event.affectsConfiguration('swan.driver')) {
+        } else if (event.affectsConfiguration('swan.swan-Driver')) {
             validatePath('driver');
+      } else if(event.affectsConfiguration('swan.swan-spm')){
+        validatePath('swan-spm');
       }
         
     });
@@ -419,7 +421,9 @@ function validatePath(type) {
   if (type === "swiftc"){
     Path = config.get('swiftcPath',"");
   } else if (type ==="driver"){
-    Path = config.get('driver',"");
+    Path = config.get('swan-Driver',"");
+  }else if (type ==="swan-spm"){
+    Path = config.get('swan-spm',"");
   }
 
 console.log(`the path inputted is ${Path}` )
@@ -804,7 +808,7 @@ console.log(`the path inputted is ${Path}` )
             const packageSwiftDirectory = findPackageSwiftDirectory(folderPath);
     
             if (!packageSwiftDirectory) {
-                vscode.window.showErrorMessage('Could not find Package.swift in the directory hierarchy.');
+                vscode.window.showInformationMessage('Could not find Package.swift in the directory hierarchy.');
 
                 cp.exec(`cd ${folderPath} &&  /home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc ${fileName}`, (error, stdout, stderr) => { 
                     if (error) {
@@ -1162,12 +1166,10 @@ console.log(`the path inputted is ${Path}` )
 	});
 
     const runCryptoAnalysis = vscode.commands.registerCommand('swancommands.cryptoAnalysis', function () {
-		// The code you place here will be executed every time your command is executed
 		const activeEditor = vscode.window.activeTextEditor;
         const swiftcPath = '/home/abdulraheem/buildingSwan/swan/lib/swan-swiftc'
         const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
         
-		// Display a message box to the user
         if (activeEditor) {
             const filePath = activeEditor.document.fileName;
             const folderPath = path.dirname(filePath);
@@ -1280,8 +1282,6 @@ console.log(`the path inputted is ${Path}` )
                 } else {
                     console.log('.build folder does not exist in:', buildFolderPath);
                 }
-    
-                // Show a message that the file is running
                
                
               cp.exec(`cd ${packageSwiftDirectory} &&  python3 /home/abdulraheem/swanNewBuild/swan/tests/swan-spm.py`, (error, stdout, stderr) => { 

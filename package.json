@@ -127,6 +127,21 @@
       "type": "object",
       "title": "SWAN Extension Settings",
       "properties": {
+        "swan.swiftcPath": {
+              "type": "string",
+              "default": "",
+              "description": "Path to the swan-swiftc file on your device"
+            },
+            "swan.swan-Driver": {
+              "type": "string",
+              "default": "",
+              "description": "Path to the driver.jar file on your device"
+            },
+            "swan.swan-spm": {
+              "type": "string",
+              "default": "",
+              "description": "Path to the swan-spm.py script file on your device"
+            },
         "swan.forceCacheRead": {
           "type": "boolean",
           "default": false,
@@ -166,28 +181,16 @@
           "type": "boolean",
           "default": false,
           "description": "Force single-threaded execution (--single)."
+        },"swan.typestateAnalysisSpecPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Typestate Analysis Spec file (--typestate-analysis-spec=<path>)."
         },
         "swan.taintAnalysisSpecPath": {
           "type": "string",
           "default": "",
           "description": "Path to the Taint Analysis Spec file (--taint-analysis-spec=<path>)."
-        },
-        "swan.typestateAnalysisSpecPath": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the Typestate Analysis Spec file (--typestate-analysis-spec=<path>)."
-        },
-            "swan.swiftcPath": {
-              "type": "string",
-              "default": "",
-              "description": "Path to the swan-swiftc file on your device"
-            },
-            "swan.driver": {
-              "type": "string",
-              "default": "",
-              "description": "Path to the driver.jar file on your device"
-            }
-       
+        }
       }
     }
   },
