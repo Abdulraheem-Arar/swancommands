@@ -17,7 +17,7 @@ function activate(context) {
     function detectSwiftDocument(document) {
         if (document && document.languageId === 'swift') {
             //vscode.window.showInformationMessage('Swift file detected: ' + document.fileName);
-            vscode.commands.executeCommand('swancommands.cryptoAnalysis')
+            vscode.commands.executeCommand('swancommands.runAnalysis','crypto')
         }
     }
 
