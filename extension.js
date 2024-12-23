@@ -12,7 +12,9 @@ const sharedState = require('./sharedState');
 
 let currentModule;
 let boolForceCache = false, boolDebug = false, boolCallGraph = false, boolInvalidateCache = false, boolNames = false, boolDot = false, boolProbe = false, boolSingle = false;
-
+let isPathValid = true;
+let isTaintPathValid = true;
+let isTypestatePathValid = true;
 
 function activate(context) {
     
@@ -46,7 +48,11 @@ function activate(context) {
             'probe': false,
             'single': false,
             'taintAnalysisSpecPath': '',
-            'typestateAnalysisSpecPath': ''
+            'typestateAnalysisSpecPath': '',
+            /* removed these for now just to carry on with testing the extension */
+           // 'swiftcPath': '',
+            // 'swan-Driver': '',
+            // 'swan-spm': ''
         };
     
         // Reset each setting to its default value
@@ -148,10 +154,12 @@ function activate(context) {
     vscode.workspace.onDidChangeConfiguration((event) => {
         const config = vscode.workspace.getConfiguration("swan");
         if (event.affectsConfiguration("swan.taintAnalysisSpecPath")) {
+            validatePath('taint')
             sharedState.taintAnalysisUserPath = config.get("taintAnalysisSpecPath", "");
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Taint Analysis Spec path updated to: ${sharedState.taintAnalysisUserPath}`);
         } else if (event.affectsConfiguration("swan.typestateAnalysisSpecPath")) {
+            validatePath('typestate')
             sharedState.typestateAnalysisUserPath = config.get("typestateAnalysisSpecPath", "");
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Typestate Analysis Spec path updated to: ${sharedState.typestateAnalysisUserPath}`);
@@ -198,26 +206,51 @@ function validatePath(type) {
     Path = config.get('swiftcPath',"");
   } else if (type ==="driver"){
     Path = config.get('swan-Driver',"");
-  }else if (type ==="swan-spm"){
+  } else if (type ==="swan-spm"){
     Path = config.get('swan-spm',"");
+  } else if (type ==='taint'){
+    Path = config.get('taintAnalysisSpecPath')
+  } else if (type === 'typestate'){
+    Path = config.get('typestateAnalysisSpecPath')
   }
 
     console.log(`the path inputted is ${Path}` )
 
-    if (!Path || Path.trim() === "") {
-        vscode.window.showErrorMessage('Path cannot be empty please input the correct path');
-    }
-
     const trimmedValue = Path.trim(); // Remove any extra spaces
 
-   // Check if the path contains slashes
-    if (!trimmedValue.includes("/")) {
-    vscode.window.showErrorMessage("The path must contain at least one slash ('/')"); 
-   } 
+    if (!Path || trimmedValue === "") {
+        vscode.window.showErrorMessage('Path cannot be empty please input the correct path');
+        if (type ==='typestate'){
+            isTypestatePathValid = false;
+        } else if (type ==='taint'){
+            isTaintPathValid = false;
+        } else {
+            isPathValid = false;
+        }
+        
+    } else if (!trimmedValue.includes("/")){  // Check if the path contains slashes
+        vscode.window.showErrorMessage("The path must contain at least one slash ('/')"); 
+        if (type ==='typestate'){
+            isTypestatePathValid = false;
+        } else if (type ==='taint'){
+            isTaintPathValid = false;
+        } else {
+            isPathValid = false;
+        }
+        
+    } else {
+        if (type ==='typestate'){
+            isTypestatePathValid = true;
+        } else if (type ==='taint'){
+            isTaintPathValid = true;
+        } else {
+            isPathValid = true;
+        }
+    }
 
-   if (Path && typeof Path ==='string') {
+    if (Path && typeof Path ==='string') {
     const trimmedInput = Path.trim();
-   }
+    }
 }
     
 
@@ -294,18 +327,6 @@ function validatePath(type) {
             }
         });
     });
-   
-   
-  /*  vscode.commands.registerCommand('swancommands.toggleBoolean', (type) => {
-        const config = vscode.workspace.getConfiguration();
-        const currentValue = config.get(`swan.${type}`);
-        config.update(`swan.${type}`, !currentValue, true).then(() => {
-            vscode.window.showInformationMessage(
-                `the boolean option is now is now ${!currentValue ? 'enabled' : 'disabled'}.`
-            );
-        });
-    });
-    */
 
     const openSettingsCommand = vscode.commands.registerCommand(
         "swancommands.openSettings",
@@ -349,6 +370,18 @@ function validatePath(type) {
     }
 
     const runAnalysis = vscode.commands.registerCommand('swancommands.runAnalysis', function (context) {
+
+        if (!isPathValid){
+            vscode.window.showErrorMessage('the path provided for one of the analysis drivers is not valid')
+            return
+        } else if (context ==='taint' && !isTaintPathValid){
+            vscode.window.showErrorMessage('the path provided for the taint analysis specification file is not valid')
+            return
+        } else if (context ==='typestate' && !isTypestatePathValid){
+            vscode.window.showErrorMessage('the path provided for the typestate analysis specification file is not valid')
+            return
+        }
+
 		// The code you place here will be executed every time your command is executed
 		const activeEditor = vscode.window.activeTextEditor;
         const swiftcPath = '/home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc'
