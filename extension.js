@@ -11,6 +11,7 @@ const sharedState = require('./sharedState');
 
 
 let currentModule;
+let boolForceCache = false, boolDebug = false, boolCallGraph = false, boolInvalidateCache = false, boolNames = false, boolDot = false, boolProbe = false, boolSingle = false;
 
 
 function activate(context) {
@@ -155,33 +156,33 @@ function activate(context) {
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Typestate Analysis Spec path updated to: ${sharedState.typestateAnalysisUserPath}`);
         } else if (event.affectsConfiguration("swan.forceCacheRead")) {
-            const boolForceCache = config.get("forceCacheRead", "");
+             boolForceCache = config.get("forceCacheRead", "");
             vscode.window.showInformationMessage(`force cache read updated to: ${boolForceCache}`);
         }  else if (event.affectsConfiguration("swan.debug")) {
-            const boolDebug = config.get("debug", false);
+             boolDebug = config.get("debug", false);
             vscode.window.showInformationMessage(`Debug updated to: ${boolDebug}`);
         } else if (event.affectsConfiguration("swan.callGraph")) {
-            const boolCallGraph = config.get("callGraph", false);
+             boolCallGraph = config.get("callGraph", false);
             vscode.window.showInformationMessage(`Call Graph updated to: ${boolCallGraph}`);
         } else if (event.affectsConfiguration("swan.invalidateCache")) {
-            const boolInvalidateCache = config.get("invalidateCache", false);
+             boolInvalidateCache = config.get("invalidateCache", false);
             vscode.window.showInformationMessage(`Invalidate Cache updated to: ${boolInvalidateCache}`);
         } else if (event.affectsConfiguration("swan.names")) {
-            const boolNames = config.get("names", false);
+             boolNames = config.get("names", false);
             vscode.window.showInformationMessage(`Names updated to: ${boolNames}`);
         } else if (event.affectsConfiguration("swan.dot")) {
-            const boolDot = config.get("dot", false);
+             boolDot = config.get("dot", false);
             vscode.window.showInformationMessage(`DOT updated to: ${boolDot}`);
         } else if (event.affectsConfiguration("swan.probe")) {
-            const boolProbe = config.get("probe", false);
+             boolProbe = config.get("probe", false);
             vscode.window.showInformationMessage(`Probe updated to: ${boolProbe}`);
         } else if (event.affectsConfiguration("swan.single")) {
-            const boolSingle = config.get("single", false);
+             boolSingle = config.get("single", false);
             vscode.window.showInformationMessage(`Single-Threaded Execution updated to: ${boolSingle}`);
         } else if (event.affectsConfiguration('swan.swiftcPath')) {
               validatePath('swiftc');
         } else if (event.affectsConfiguration('swan.swan-Driver')) {
-            validatePath('driver');
+              validatePath('driver');
       } else if(event.affectsConfiguration('swan.swan-spm')){
         validatePath('swan-spm');
       }
@@ -201,7 +202,7 @@ function validatePath(type) {
     Path = config.get('swan-spm',"");
   }
 
-console.log(`the path inputted is ${Path}` )
+    console.log(`the path inputted is ${Path}` )
 
     if (!Path || Path.trim() === "") {
         vscode.window.showErrorMessage('Path cannot be empty please input the correct path');
@@ -295,12 +296,12 @@ console.log(`the path inputted is ${Path}` )
     });
    
    
-   /* vscode.commands.registerCommand('swancommands.toggleForceCacheRead', () => {
+  /*  vscode.commands.registerCommand('swancommands.toggleBoolean', (type) => {
         const config = vscode.workspace.getConfiguration();
-        const currentValue = config.get('swan.forceCacheRead');
-        config.update('swan.forceCacheRead', !currentValue, true).then(() => {
+        const currentValue = config.get(`swan.${type}`);
+        config.update(`swan.${type}`, !currentValue, true).then(() => {
             vscode.window.showInformationMessage(
-                `Force Cache Read is now ${!currentValue ? 'enabled' : 'disabled'}.`
+                `the boolean option is now is now ${!currentValue ? 'enabled' : 'disabled'}.`
             );
         });
     });
@@ -316,16 +317,51 @@ console.log(`the path inputted is ${Path}` )
         }
       );
 
+
+    function handleBooleans(command){
+        let Booleans = [boolForceCache, boolDebug, boolCallGraph, boolInvalidateCache, boolNames, boolDot, boolProbe, boolSingle];
+
+        if (Booleans[0]) { // boolForceCache
+            command = command + ' -f ';
+        }
+        if (Booleans[1]) { // boolDebug
+            command = command + ' -d ';
+        }
+        if (Booleans[2]) { // boolCallGraph
+            command = command + ' -g ';
+        }
+        if (Booleans[3]) { // boolInvalidateCache
+            command = command + ' -i ';
+        }
+        if (Booleans[4]) { // boolNames
+            command = command + ' -n ';
+        }
+        if (Booleans[5]) { // boolDot
+            command = command + ' -o ';
+        }
+        if (Booleans[6]) { // boolProbe
+            command = command + ' -r ';
+        }
+        if (Booleans[7]) { // boolSingle
+            command = command + ' -s ';
+        }
+        return command
+    }
+
     const runAnalysis = vscode.commands.registerCommand('swancommands.runAnalysis', function (context) {
 		// The code you place here will be executed every time your command is executed
 		const activeEditor = vscode.window.activeTextEditor;
-        const swiftcPath = '/home/abdulraheem/buildingSwan/swan/lib/swan-swiftc'
+        const swiftcPath = '/home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc'
         const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
         const taintAnalysisPath = '/home/abdulraheem/codeForMeeting/swancommands/specifications/taint.json'
         const typeStateAnalysisPath = '/home/abdulraheem/codeForMeeting/swancommands/specifications/simpleTypestate.json'
 
-         let type = context;
-         let defaultPath ='';
+        let boolCommands ='';
+        boolCommands = handleBooleans(boolCommands)
+        vscode.window.showInformationMessage(`added command is now ${boolCommands}`)
+
+        let type = context;
+        let defaultPath ='';
         let userPath = ''; 
         let command = '';
         if (type==='taint'){
@@ -388,10 +424,11 @@ console.log(`the path inputted is ${Path}` )
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} ${command} ${userPath? userPath : defaultPath} swan-dir/ `, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} ${command} ${userPath? userPath : defaultPath} ${boolCommands} swan-dir/ `, (error, stdout, stderr) => { 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
+                                            outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
                                             if(type !='callGraph'){
                                                 outputChannel.appendLine(`running the analysis on a single file`)
                                                 try {
@@ -438,8 +475,6 @@ console.log(`the path inputted is ${Path}` )
                                                 } catch (parseErr) {
                                                     console.error('Error parsing JSON:', parseErr.message);
                                                 }
-                                            } else{
-                                                outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
                                             }
                                            
                                             
@@ -486,10 +521,11 @@ console.log(`the path inputted is ${Path}` )
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} ${command} ${userPath? userPath : defaultPath} swan-dir/ `, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} ${command} ${userPath? userPath : defaultPath} ${boolCommands} swan-dir/ `, (error, stdout, stderr) => { 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
+                                            outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
                                             if (type !='callGraph'){
                                                 try {
                                                     const resultFilePath = path.join(packageSwiftDirectory, 'swan-dir', `${type}-results.json`);
@@ -540,11 +576,7 @@ console.log(`the path inputted is ${Path}` )
                                                 } catch (parseErr) {
                                                     console.error('Error parsing JSON:', parseErr.message);
                                                 }
-                                            } else{
-                                                outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
-                                            }
-                                               
-                                            
+                                            }  
                                         }
                                     });
                                 } else {
@@ -561,8 +593,6 @@ console.log(`the path inputted is ${Path}` )
         }
 		vscode.window.showInformationMessage('Hello World from swift detect 3!');
 	});
-
-
 	context.subscriptions.push(resetToDefaultSettings,openSettingsCommand, helpMenu ,clearErrors,setAnalysisSpec,showOutputChannel,runAnalysis,disposable,diagnosticCollection,{ dispose: deactivateCurrentModule });
 }
 

@@ -58,8 +58,8 @@
         "title": "Help"
       },
       {
-        "command": "swancommands.toggleForceCacheRead",
-        "title": "Toggle Force Cache Read"
+        "command": "swancommands.toggleBoolean",
+        "title": "Toggle boolean options "
       },
       {
         "command": "swancommands.openSettings",
