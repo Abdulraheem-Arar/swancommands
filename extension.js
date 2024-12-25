@@ -590,7 +590,7 @@ function validatePath(type) {
                                                             let urls=[];
                                                             let titles = [];
                                                             if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){
-                                                                jsonData[0].paths.path.forEach((path)=>{
+                                                                jsonData[0].paths[0].path.forEach((path)=>{
                                                                 urls.push(path)
                                                                     const match = path.match(/^(.*):(\d+):(\d+)$/);
                                                                     if (match) {
