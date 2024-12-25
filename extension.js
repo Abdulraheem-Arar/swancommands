@@ -13,8 +13,8 @@ const sharedState = require('./sharedState');
 let currentModule;
 let boolForceCache = false, boolDebug = false, boolCallGraph = false, boolInvalidateCache = false, boolNames = false, boolDot = false, boolProbe = false, boolSingle = false;
 let isPathValid = true;
-let isTaintPathValid = true;
-let isTypestatePathValid = true;
+let isTaintPathValid = false;
+let isTypestatePathValid = false;
 
 function activate(context) {
     
@@ -49,10 +49,7 @@ function activate(context) {
             'single': false,
             'taintAnalysisSpecPath': '',
             'typestateAnalysisSpecPath': '',
-            /* removed these for now just to carry on with testing the extension */
-           // 'swiftcPath': '',
-            // 'swan-Driver': '',
-            // 'swan-spm': ''
+            
         };
     
         // Reset each setting to its default value
@@ -219,7 +216,7 @@ function validatePath(type) {
     const trimmedValue = Path.trim(); // Remove any extra spaces
 
     if (!Path || trimmedValue === "") {
-        vscode.window.showErrorMessage('Path cannot be empty please input the correct path');
+        vscode.window.showErrorMessage(`Path to ${type} cannot be empty please input the correct path`);
         if (type ==='typestate'){
             isTypestatePathValid = false;
         } else if (type ==='taint'){
@@ -386,31 +383,25 @@ function validatePath(type) {
 		const activeEditor = vscode.window.activeTextEditor;
         const swiftcPath = '/home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc'
         const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
-        const taintAnalysisPath = '/home/abdulraheem/codeForMeeting/swancommands/specifications/taint.json'
-        const typeStateAnalysisPath = '/home/abdulraheem/codeForMeeting/swancommands/specifications/simpleTypestate.json'
 
         let boolCommands ='';
         boolCommands = handleBooleans(boolCommands)
         vscode.window.showInformationMessage(`added command is now ${boolCommands}`)
 
         let type = context;
-        let defaultPath ='';
+        
         let userPath = ''; 
         let command = '';
         if (type==='taint'){
-            defaultPath = taintAnalysisPath;
             userPath = sharedState.taintAnalysisUserPath;
             command = '-t'
         } else if (type === 'typestate') {
-            defaultPath = typeStateAnalysisPath;
             userPath = sharedState.typestateAnalysisUserPath;
             command = '-e';
         } else if (type === 'crypto'){
-            defaultPath = '';
             userPath = '';
             command = '--crypto'
         } else if (type === 'callGraph'){
-            defaultPath = '';
             userPath = '';
             command = '-g'
         }
@@ -457,7 +448,7 @@ function validatePath(type) {
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} ${command} ${userPath? userPath : defaultPath} ${boolCommands} swan-dir/ `, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${folderPath} && java -jar ${driverJarPath} ${command} ${userPath} ${boolCommands} swan-dir/ `, (error, stdout, stderr) => { 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
@@ -478,6 +469,7 @@ function validatePath(type) {
                                                             let urls=[];
                                                             let titles = [];
                                                             if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){
+                                                                let advice = jsonData[0].advice;
                                                                 jsonData[0].paths.forEach((item)=>{
                                                                     titles= [];
                                                                     urls =[];
@@ -492,7 +484,7 @@ function validatePath(type) {
                                                                             const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
 
                                                                             const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning); 
                                                                             diagnostics.push(diagnostic) 
                                                                             }
                                                                             const activeEditor = vscode.window.activeTextEditor;
@@ -509,6 +501,7 @@ function validatePath(type) {
                                                                         }
                                                             })
                                                             } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){
+                                                                let advice = jsonData[0].advice;
                                                                 jsonData[0].errors.forEach((error)=>{
                                                                     let path = folderPath + '/' + error.pos ;
                                                                     urls.push(path)
@@ -519,7 +512,7 @@ function validatePath(type) {
                                                                       const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
                                                                       const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
                                                                       const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this : ${advice}`, vscode.DiagnosticSeverity.Warning); 
                                                                       diagnostics.push(diagnostic) 
                                                                     }
                                                                     const activeEditor = vscode.window.activeTextEditor;
@@ -585,7 +578,7 @@ function validatePath(type) {
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} ${command} ${userPath? userPath : defaultPath} ${boolCommands} swan-dir/ `, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} ${command} ${userPath} ${boolCommands} swan-dir/ `, (error, stdout, stderr) => { 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
@@ -605,6 +598,7 @@ function validatePath(type) {
                                                             let urls=[];
                                                             let titles = [];
                                                             if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){
+                                                                let advice = jsonData[0].advice;
                                                                 jsonData[0].paths.forEach((item)=>{
                                                                     titles= [];
                                                                     urls =[];
@@ -619,7 +613,7 @@ function validatePath(type) {
                                                                             const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
 
                                                                             const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning); 
                                                                             diagnostics.push(diagnostic) 
                                                                             }
                                                                             const activeEditor = vscode.window.activeTextEditor;
@@ -636,6 +630,7 @@ function validatePath(type) {
                                                                         }
                                                                 })
                                                             } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){
+                                                                let advice = jsonData[0].advice;
                                                                 jsonData[0].errors.forEach((error)=>{
                                                                     let path = folderPath + '/' + error.pos ;
                                                                     urls.push(path)
@@ -646,7 +641,7 @@ function validatePath(type) {
                                                                       const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
                                                                       const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
                                                                       const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning); 
                                                                       diagnostics.push(diagnostic) 
                                                                     }
                                                                     const activeEditor = vscode.window.activeTextEditor;
