@@ -1,0 +1,63 @@
+[
+    {
+      "style": 0,
+      "name": "SQLiteStateTracker",
+      "type": "SQLite",
+      "description": "Tracks the state of SQLite database operations to ensure proper opening, querying, and closing.",
+      "advice": "Ensure the database is opened before querying or closing.",
+      "states": [
+        {
+          "name": "UNINITIALIZED",
+          "error": true,
+          "message": "Database must be opened before performing any operations.",
+          "initial": true,
+          "accepting": false
+        },
+        {
+          "name": "OPENED",
+          "error": false,
+          "message": "Database opened successfully.",
+          "initial": false,
+          "accepting": false
+        },
+        {
+          "name": "CLOSED",
+          "error": true,
+          "message": "Database is closed. Operations cannot be performed.",
+          "initial": false,
+          "accepting": true
+        }
+      ],
+      "transitions": [
+        {
+          "from": "UNINITIALIZED",
+          "method": ".*SQLite.open.*",
+          "param": "Param1",
+          "to": "OPENED",
+          "type": "OnCall"
+        },
+        {
+          "from": "OPENED",
+          "method": ".*SQLite.close.*",
+          "param": "Param1",
+          "to": "CLOSED",
+          "type": "OnCall"
+        },
+        {
+          "from": "OPENED",
+          "method": ".*SQLite.query.*",
+          "param": "Param1",
+          "to": "OPENED",
+          "type": "OnCall"
+        },
+        {
+          "from": "CLOSED",
+          "method": ".*SQLite.open.*",
+          "param": "Param1",
+          "to": "OPENED",
+          "type": "OnCall"
+        }
+      ]
+    }
+  ]
+  

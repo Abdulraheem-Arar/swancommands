@@ -1,0 +1,42 @@
+[
+    {
+      "name": "testing",
+      "description": "",
+      "advice": "",
+      "sources": [
+        {
+          "name": "test.source1() -> Swift.String",
+          "description": "source 1 description"
+        },
+        {
+          "name": "test.source2() -> Swift.String",
+          "description": "source 2 description"
+        }
+      ],
+      "sinks": [
+        {
+          "name": "test.sink1(sunk: Swift.String) -> ()",
+          "description": "sink 1 description"
+        },
+        {
+          "name": "test.sink2(sunk: Swift.String) -> ()",
+          "description": "sink 2 description"
+        },
+        {
+          "name": "test.sink3(sunk: Swift.String) -> ()",
+          "description": "sink 3 description"
+        }
+      ],
+      "sanitizers": [
+        {
+          "name": "test.sanitizer1(tainted: Swift.String) -> Swift.String",
+          "description": "sanitizer 1 description"
+        },
+        {
+          "name": "test.sanitizer2(tainted: Swift.String) -> Swift.String",
+          "description": "sanitizer 2 description"
+        }
+      ]
+    }
+  ]
+  

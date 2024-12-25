@@ -476,7 +476,8 @@ function validatePath(type) {
                                                             outputChannel.appendLine(JSON.stringify(jsonData, null, 2));
                                                             let diagnostics = []
                                                             let urls=[];
-                                                            if(jsonData[0].paths && jsonData[0].paths.length>0){
+                                                            let titles = [];
+                                                            if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){
                                                                 jsonData[0].paths[0].path.forEach((path)=>{
                                                                     urls.push(path)
                                                                     const match = path.match(/^(.*):(\d+):(\d+)$/);
@@ -493,10 +494,33 @@ function validatePath(type) {
                                                                     diagnosticCollection.set(activeEditor.document.uri, diagnostics)
                                                                 }
                                                                 });
+                                                            } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){
+                                                                jsonData[0].errors.forEach((error)=>{
+                                                                    let path = folderPath + '/' + error.pos ;
+                                                                    urls.push(path)
+                                                                    titles.push(error.message)
+                                                                    const match = path.match(/^(.*):(\d+):(\d+)$/);
+                                                                    if (match) {
+                                                                      const [_, filePath, lineStr, colStr] = match;
+                                                                      const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
+                                                                      const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
+                                                                      const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
+                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                      diagnostics.push(diagnostic) 
+                                                                    }
+                                                                    const activeEditor = vscode.window.activeTextEditor;
+                                                                    if (activeEditor) {
+                                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                                }
+                                                                });
                                                             }
-                                                            console.log("Calling addError with:", jsonData[0].name,jsonData[0].description,urls);
-                                                            errorsProvider.addError(jsonData[0].name,jsonData[0].description,urls); 
-                                                            console.log("just added the error")
+                                                            try {
+                                                                console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
+                                                                errorsProvider.addError(jsonData[0].name, jsonData[0].description,titles, urls);
+                                                                console.log("just added the error");
+                                                            } catch (err) {
+                                                                console.error("Error while adding error to errorsProvider:", err);
+                                                            }
                                                         } catch (parseErr) {
                                                             outputChannel.appendLine(`Error parsing ${type}-results.json: ${parseErr.message}`);
                                                         }
@@ -522,23 +546,15 @@ function validatePath(type) {
                 });
             
             } else {
-                const buildFolderPath = path.join(packageSwiftDirectory, '.build');
 
-            
-                if (fs.existsSync(buildFolderPath)) {
-                    fs.rm(buildFolderPath, { recursive: true, force: true }, (err) => {
-                        if (err) {
-                            console.error('Error removing .build folder:', err);
+                    cp.exec(`cd ${packageSwiftDirectory} && swift package clean`,(error, stdout, stderr)=>{
+                        if (error){
+                            console.log('Error removing .build folder:', stderr)
                         } else {
                             console.log('.build folder removed successfully.');
                         }
-                    });
-                } else {
-                    console.log('.build folder does not exist in:', buildFolderPath);
-                }
-    
-                // Show a message that the file is running
-               
+                    })
+                    
                
               cp.exec(`cd ${packageSwiftDirectory} &&  python3 /home/abdulraheem/swanNewBuild/swan/tests/swan-spm.py`, (error, stdout, stderr) => { 
                     if (error) {
@@ -572,8 +588,9 @@ function validatePath(type) {
                                                             outputChannel.appendLine(JSON.stringify(jsonData, null, 2));
                                                             let diagnostics = [];
                                                             let urls=[];
-                                                            if(jsonData[0].paths && jsonData[0].paths.length>0){
-                                                                jsonData[0].paths[0].path.forEach((path)=>{
+                                                            let titles = [];
+                                                            if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){
+                                                                jsonData[0].paths.path.forEach((path)=>{
                                                                 urls.push(path)
                                                                     const match = path.match(/^(.*):(\d+):(\d+)$/);
                                                                     if (match) {
@@ -590,14 +607,34 @@ function validatePath(type) {
                                                                     diagnosticCollection.set(activeEditor.document.uri, diagnostics)
                                                                 }
                                                                 });
+                                                            } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){
+                                                                jsonData[0].errors.forEach((error)=>{
+                                                                    let path = folderPath + '/' + error.pos ;
+                                                                    urls.push(path)
+                                                                    titles.push(error.message)
+                                                                    const match = path.match(/^(.*):(\d+):(\d+)$/);
+                                                                    if (match) {
+                                                                      const [_, filePath, lineStr, colStr] = match;
+                                                                      const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
+                                                                      const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
+                                                                      const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
+                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                      diagnostics.push(diagnostic) 
+                                                                    }
+                                                                    const activeEditor = vscode.window.activeTextEditor;
+                                                                    if (activeEditor) {
+                                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                                }
+                                                                });
+                                                            }
                                                                 try {
-                                                                    console.log("Calling addError with:", jsonData[0].name, jsonData[0].description, urls);
-                                                                    errorsProvider.addError(jsonData[0].name, jsonData[0].description, urls);
+                                                                    console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
+                                                                    errorsProvider.addError(jsonData[0].name, jsonData[0].description, titles, urls);
                                                                     console.log("just added the error");
                                                                 } catch (err) {
                                                                     console.error("Error while adding error to errorsProvider:", err);
                                                                 }
-                                                            }
+                                                            
                                                         } catch (parseErr) {
                                                             outputChannel.appendLine(`Error parsing ${type}-results.json: ${parseErr.message}`);
                                                         }

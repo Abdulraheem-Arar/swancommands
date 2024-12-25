@@ -4,7 +4,7 @@ const sharedState = require('./sharedState');
 
 
 class ErrorItem extends vscode.TreeItem {
-    constructor(label, message, urls) {
+    constructor(label, message, titles, urls) {
         // Call the parent constructor with the error label
         super(label, urls?.length > 1
             ? vscode.TreeItemCollapsibleState.Collapsed 
@@ -19,15 +19,18 @@ class ErrorItem extends vscode.TreeItem {
             // If there's only one URL, attach a command directly
             this.command = this.createCommand(urls[0]);
         } else if (urls?.length > 1){
-            // Create child items for each URL
-            this.children = urls.map((url) => this.createUrlChildItem(url));
+            // Create child items for each URL  
+            for (let i=0;i < urls.length ;i++){
+                this.children.push(this.createUrlChildItem(titles[i],urls[i]))  
+            }
+            
         }
     }
 
     // Helper to create a child TreeItem for a URL
-    createUrlChildItem(url) {
+    createUrlChildItem(title,url) {
         const child = new vscode.TreeItem(
-            url,
+            title,
             vscode.TreeItemCollapsibleState.None // Child items are not expandable
         );
         child.command = this.createCommand(url); // Attach navigation command
@@ -91,7 +94,6 @@ class SwanTreeDataProvider {
                 if (this.shouldShowResults()) {
                     // Add the children of 'Settings' directly to the root level
                     children = children.concat(this.createParentItem("View Results", [
-                        "Analysis Summary",
                         "Detailed Logs",
                     
                     ]).children); // Only include the children, not the parent item itself
@@ -176,8 +178,8 @@ class SwanTreeDataProvider {
         return parent;
     }
 
-    addError(label,message,urls) {
-        const error = new ErrorItem(label,message,urls);
+    addError(label,message,titles,urls) {
+        const error = new ErrorItem(label,message,titles,urls);
         console.log('Adding error:', error);
         this.errors.push(error);
         this.refresh();
