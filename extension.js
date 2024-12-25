@@ -478,22 +478,36 @@ function validatePath(type) {
                                                             let urls=[];
                                                             let titles = [];
                                                             if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){
-                                                                jsonData[0].paths[0].path.forEach((path)=>{
-                                                                    urls.push(path)
-                                                                    const match = path.match(/^(.*):(\d+):(\d+)$/);
-                                                                    if (match) {
-                                                                      const [_, filePath, lineStr, colStr] = match;
-                                                                      const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
-                                                                      const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
-                                                                      const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
-                                                                      diagnostics.push(diagnostic) 
-                                                                    }
-                                                                    const activeEditor = vscode.window.activeTextEditor;
-                                                                    if (activeEditor) {
-                                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics)
-                                                                }
-                                                                });
+                                                                jsonData[0].paths.forEach((item)=>{
+                                                                    titles= [];
+                                                                    urls =[];
+                                                                    titles.push(item.source.name)
+                                                                    titles.push(item.sink.name)
+                                                                    item.path.forEach((path)=>{
+                                                                        urls.push(path)
+                                                                            const match = path.match(/^(.*):(\d+):(\d+)$/);
+                                                                            if (match) {
+                                                                            const [_, filePath, lineStr, colStr] = match;
+                                                                            const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
+                                                                            const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
+
+                                                                            const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
+                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                            diagnostics.push(diagnostic) 
+                                                                            }
+                                                                            const activeEditor = vscode.window.activeTextEditor;
+                                                                            if (activeEditor) {
+                                                                            diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                                        }
+                                                                        });
+                                                                        try {
+                                                                            console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
+                                                                            errorsProvider.addError(jsonData[0].name, jsonData[0].description, titles, urls);
+                                                                            console.log("just added the error");
+                                                                        } catch (err) {
+                                                                            console.error("Error while adding error to errorsProvider:", err);
+                                                                        }
+                                                            })
                                                             } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){
                                                                 jsonData[0].errors.forEach((error)=>{
                                                                     let path = folderPath + '/' + error.pos ;
@@ -513,14 +527,15 @@ function validatePath(type) {
                                                                     diagnosticCollection.set(activeEditor.document.uri, diagnostics)
                                                                 }
                                                                 });
+                                                                try {
+                                                                    console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
+                                                                    errorsProvider.addError(jsonData[0].name, jsonData[0].description,titles, urls);
+                                                                    console.log("just added the error");
+                                                                } catch (err) {
+                                                                    console.error("Error while adding error to errorsProvider:", err);
+                                                                }
                                                             }
-                                                            try {
-                                                                console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
-                                                                errorsProvider.addError(jsonData[0].name, jsonData[0].description,titles, urls);
-                                                                console.log("just added the error");
-                                                            } catch (err) {
-                                                                console.error("Error while adding error to errorsProvider:", err);
-                                                            }
+                                                            
                                                         } catch (parseErr) {
                                                             outputChannel.appendLine(`Error parsing ${type}-results.json: ${parseErr.message}`);
                                                         }
@@ -590,23 +605,36 @@ function validatePath(type) {
                                                             let urls=[];
                                                             let titles = [];
                                                             if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){
-                                                                jsonData[0].paths[0].path.forEach((path)=>{
-                                                                urls.push(path)
-                                                                    const match = path.match(/^(.*):(\d+):(\d+)$/);
-                                                                    if (match) {
-                                                                      const [_, filePath, lineStr, colStr] = match;
-                                                                      const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
-                                                                      const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
-            
-                                                                      const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
-                                                                      diagnostics.push(diagnostic) 
-                                                                    }
-                                                                    const activeEditor = vscode.window.activeTextEditor;
-                                                                    if (activeEditor) {
-                                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics)
-                                                                }
-                                                                });
+                                                                jsonData[0].paths.forEach((item)=>{
+                                                                    titles= [];
+                                                                    urls =[];
+                                                                    titles.push(item.source.name)
+                                                                    titles.push(item.sink.name)
+                                                                    item.path.forEach((path)=>{
+                                                                        urls.push(path)
+                                                                            const match = path.match(/^(.*):(\d+):(\d+)$/);
+                                                                            if (match) {
+                                                                            const [_, filePath, lineStr, colStr] = match;
+                                                                            const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
+                                                                            const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
+
+                                                                            const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
+                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this`, vscode.DiagnosticSeverity.Warning); 
+                                                                            diagnostics.push(diagnostic) 
+                                                                            }
+                                                                            const activeEditor = vscode.window.activeTextEditor;
+                                                                            if (activeEditor) {
+                                                                            diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                                        }
+                                                                        });
+                                                                        try {
+                                                                            console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
+                                                                            errorsProvider.addError(jsonData[0].name, jsonData[0].description, titles, urls);
+                                                                            console.log("just added the error");
+                                                                        } catch (err) {
+                                                                            console.error("Error while adding error to errorsProvider:", err);
+                                                                        }
+                                                                })
                                                             } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){
                                                                 jsonData[0].errors.forEach((error)=>{
                                                                     let path = folderPath + '/' + error.pos ;
@@ -626,7 +654,6 @@ function validatePath(type) {
                                                                     diagnosticCollection.set(activeEditor.document.uri, diagnostics)
                                                                 }
                                                                 });
-                                                            }
                                                                 try {
                                                                     console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
                                                                     errorsProvider.addError(jsonData[0].name, jsonData[0].description, titles, urls);
@@ -634,6 +661,7 @@ function validatePath(type) {
                                                                 } catch (err) {
                                                                     console.error("Error while adding error to errorsProvider:", err);
                                                                 }
+                                                            }
                                                             
                                                         } catch (parseErr) {
                                                             outputChannel.appendLine(`Error parsing ${type}-results.json: ${parseErr.message}`);

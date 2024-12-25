@@ -1,7 +1,7 @@
 [
     {
-      "name": "testing",
-      "description": "",
+      "name": "custom taint spec",
+      "description": "this is my custom test case",
       "advice": "",
       "sources": [
         {
