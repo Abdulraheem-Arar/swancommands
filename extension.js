@@ -383,6 +383,7 @@ function validatePath(type) {
 		const activeEditor = vscode.window.activeTextEditor;
         const swiftcPath = '/home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc'
         const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
+        const swanSpmPath = '/home/abdulraheem/swanNewBuild/swan/tests/swan-spm.py'
 
         let boolCommands ='';
         boolCommands = handleBooleans(boolCommands)
@@ -564,7 +565,7 @@ function validatePath(type) {
                     })
                     
                
-              cp.exec(`cd ${packageSwiftDirectory} &&  python3 /home/abdulraheem/swanNewBuild/swan/tests/swan-spm.py`, (error, stdout, stderr) => { 
+              cp.exec(`cd ${packageSwiftDirectory} &&  python3 ${swanSpmPath}`, (error, stdout, stderr) => { 
                     if (error) {
                         outputChannel.appendLine(`Error: ${stderr}`);
                     } else{
