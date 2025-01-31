@@ -12,9 +12,12 @@ const sharedState = require('./sharedState');
 
 let currentModule;
 let boolForceCache = false, boolDebug = false, boolCallGraph = false, boolInvalidateCache = false, boolNames = false, boolDot = false, boolProbe = false, boolSingle = false;
-let isPathValid = true;
+let isPathValid = false;
 let isTaintPathValid = false;
 let isTypestatePathValid = false;
+let swiftcPath = "";
+let driverJarPath = "";
+let swanSpmPath = "";
 
 function activate(context) {
     
@@ -33,6 +36,8 @@ function activate(context) {
 
     // Reset settings to their defaults
     resetSettingsToDefaults();
+    //initialize the paths to what they were previously set to 
+    initializePaths()
 
     function resetSettingsToDefaults() {
         const config = vscode.workspace.getConfiguration('swan');
@@ -49,7 +54,6 @@ function activate(context) {
             'single': false,
             'taintAnalysisSpecPath': '',
             'typestateAnalysisSpecPath': '',
-            
         };
     
         // Reset each setting to its default value
@@ -66,6 +70,29 @@ function activate(context) {
     
         vscode.window.showInformationMessage('SWAN settings have been reset to their default values.');
     }
+
+    function initializePaths(){
+        //taint path initialization
+        validatePath('taint')
+        sharedState.taintAnalysisUserPath = config.get("taintAnalysisSpecPath", "");
+        settingsProvider.refresh();
+        //vscode.window.showInformationMessage(`Taint Analysis Spec path updated to: ${sharedState.taintAnalysisUserPath}`);
+        //typestate path initialization 
+        validatePath('typestate')
+        sharedState.typestateAnalysisUserPath = config.get("typestateAnalysisSpecPath", "");
+        settingsProvider.refresh();
+        //vscode.window.showInformationMessage(`Typestate Analysis Spec path updated to: ${sharedState.typestateAnalysisUserPath}`);
+        //swiftc path initialization
+        validatePath('swiftc');
+        //vscode.window.showInformationMessage(`swan-swiftc path updated to: ${swiftcPath}`);
+        //driver.jar path initialization
+        validatePath('driver');
+        //vscode.window.showInformationMessage(`driver.jar path updated to: ${driverJarPath}`);
+        //swan-spm.py path initialization
+        validatePath('swan-spm');
+        //vscode.window.showInformationMessage(`swan-spm.py path updated to: ${swanSpmPath}`);
+    }
+
     const resetToDefaultSettings = vscode.commands.registerCommand('swancommands.defaults', function () {
         resetSettingsToDefaults();
     })
@@ -186,10 +213,13 @@ function activate(context) {
             vscode.window.showInformationMessage(`Single-Threaded Execution updated to: ${boolSingle}`);
         } else if (event.affectsConfiguration('swan.swiftcPath')) {
               validatePath('swiftc');
+              vscode.window.showInformationMessage(`swan-swiftc path updated to: ${swiftcPath}`);
         } else if (event.affectsConfiguration('swan.swan-Driver')) {
               validatePath('driver');
+              vscode.window.showInformationMessage(`driver.jar path updated to: ${driverJarPath}`);
       } else if(event.affectsConfiguration('swan.swan-spm')){
         validatePath('swan-spm');
+        vscode.window.showInformationMessage(`swan-spm.py path updated to: ${swanSpmPath}`);
       }
         
     });
@@ -242,6 +272,13 @@ function validatePath(type) {
             isTaintPathValid = true;
         } else {
             isPathValid = true;
+            if (type === "swiftc"){
+                swiftcPath = Path;
+              } else if (type ==="driver"){
+                driverJarPath = Path;
+              } else if (type ==="swan-spm"){
+                swanSpmPath = Path;
+              }
         }
     }
 
@@ -290,7 +327,7 @@ function validatePath(type) {
     outputChannel.clear();
     let isOutputChannel = false; 
 
-    const showOutputChannel = vscode.commands.registerCommand('swancommands.Detailed Logs', function () {
+    const showOutputChannel = vscode.commands.registerCommand('swancommands.DetailedLogs', function () {
         if (!isOutputChannel){
             outputChannel.show(true);
             isOutputChannel = true;
@@ -306,7 +343,6 @@ function validatePath(type) {
     });
 
     const helpMenu = vscode.commands.registerCommand('swancommands.help', (label) => {
-        const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
         cp.exec(`java -jar ${driverJarPath} -help`, (error, stdout, stderr) => {
             // Handle standard output
             if (stdout) {
@@ -381,9 +417,6 @@ function validatePath(type) {
 
 		// The code you place here will be executed every time your command is executed
 		const activeEditor = vscode.window.activeTextEditor;
-        const swiftcPath = '/home/abdulraheem/swanNewBuild/swan/lib/swan-swiftc'
-        const driverJarPath = '/home/abdulraheem/swanNewBuild/swan/lib/driver.jar'
-        const swanSpmPath = '/home/abdulraheem/swanNewBuild/swan/tests/swan-spm.py'
 
         let boolCommands ='';
         boolCommands = handleBooleans(boolCommands)

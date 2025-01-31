@@ -1,7 +1,8 @@
 {
-  "name": "swancommands",
+  "name": "swan",
   "displayName": "swanCommands",
-  "description": "this is an extension built to allow you to run swan commands in the command palette",
+  "publisher": "SANADLAB",
+  "description": "this is an extension built to allow you to run swan commands using vs code",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.94.0"
@@ -9,7 +10,12 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "repository": {
+  "type": "git",
+  "url": "https://github.com/themaplelab/swan"
+}
+,
+  "activationEvents": ["onStartupFinished","onLanguage:swift"],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -34,7 +40,7 @@
         "title": "typeStateAnalysis"
       },
       {
-        "command": "swancommands.Detailed Logs",
+        "command": "swancommands.DetailedLogs",
         "title": "Show Detailed Logs"
       },
       {

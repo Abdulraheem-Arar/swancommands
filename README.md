@@ -1,65 +1,22 @@
-# swancommands README
+# Swan 
 
-This is the README for your extension "swancommands". After writing up a brief description, we recommend including the following sections.
+Swan is a static analysis tool used to analyze swift code , this Visual Studio Code extension is designed to streamline workflows for using the SWAN tool.
 
 ## Features
+- Automatically detect Swift files.
+- Provide commands for running SWAN analysis.
+- Display analysis results directly in VS Code.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Installation
+1. Search for "Swan Commands" in the Visual Studio Code Marketplace.
+2. Click `Install`.
+3. Open the extension and go to general settings
+4. Then provide the absolute paths for the driver.jar, swan-spm.py and swan-swiftc files after you have built the swan tool locally
 
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
+## Usage
+1. Open a Swift project in VS Code.
+2. Provide the absolute path to your specification file for either taint or typestate analysis 
+2. Use the menu to select an analysis option or use the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) to find and execute Swan Commands.
 ---
 
-## Working with Markdown
 
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
