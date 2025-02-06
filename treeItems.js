@@ -134,7 +134,7 @@ class SwanTreeDataProvider {
                 };
             } else if(childLabel === 'Detailed Logs' ){
                 item.command = {
-                    command: `swancommands.${childLabel}`, // Adjusting the command string
+                    command: `swancommands.DetailedLogs`, // Adjusting the command string
                     title: `Run ${childLabel}`, // Optional: add title for clarity
                 };
             } else if (childLabel === "Taint Analysis spec") {

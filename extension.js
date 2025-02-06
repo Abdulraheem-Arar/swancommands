@@ -32,15 +32,18 @@ function activate(context) {
     vscode.window.registerTreeDataProvider('settingsView', settingsProvider);
     vscode.window.registerTreeDataProvider('errorsView', errorsProvider);
 
+
+    const config = vscode.workspace.getConfiguration('swan');
+    
     console.log('Extension is now active!');
 
     // Reset settings to their defaults
     resetSettingsToDefaults();
     //initialize the paths to what they were previously set to 
-    initializePaths()
+    initializePaths();
 
     function resetSettingsToDefaults() {
-        const config = vscode.workspace.getConfiguration('swan');
+       
     
         // Default values for all settings
         const defaults = {
@@ -84,13 +87,16 @@ function activate(context) {
         //vscode.window.showInformationMessage(`Typestate Analysis Spec path updated to: ${sharedState.typestateAnalysisUserPath}`);
         //swiftc path initialization
         validatePath('swiftc');
+        swiftcPath = config.get('swiftcPath',"");
         //vscode.window.showInformationMessage(`swan-swiftc path updated to: ${swiftcPath}`);
         //driver.jar path initialization
         validatePath('driver');
+        driverJarPath = config.get('swan-Driver',"");
         //vscode.window.showInformationMessage(`driver.jar path updated to: ${driverJarPath}`);
         //swan-spm.py path initialization
         validatePath('swan-spm');
-        //vscode.window.showInformationMessage(`swan-spm.py path updated to: ${swanSpmPath}`);
+        swanSpmPath = config.get('swan-spm',"");
+        vscode.window.showInformationMessage(`swan-spm.py path updated to: ${swanSpmPath}`);
     }
 
     const resetToDefaultSettings = vscode.commands.registerCommand('swancommands.defaults', function () {
@@ -272,13 +278,6 @@ function validatePath(type) {
             isTaintPathValid = true;
         } else {
             isPathValid = true;
-            if (type === "swiftc"){
-                swiftcPath = Path;
-              } else if (type ==="driver"){
-                driverJarPath = Path;
-              } else if (type ==="swan-spm"){
-                swanSpmPath = Path;
-              }
         }
     }
 

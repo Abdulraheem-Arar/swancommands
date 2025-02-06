@@ -1,9 +1,9 @@
 {
-  "name": "swan",
-  "displayName": "swanCommands",
+  "name": "swan1",
+  "displayName": "swan-GUI",
   "publisher": "SANADLAB",
   "description": "this is an extension built to allow you to run swan commands using vs code",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.94.0"
   },
@@ -15,7 +15,7 @@
   "url": "https://github.com/themaplelab/swan"
 }
 ,
-  "activationEvents": ["onStartupFinished","onLanguage:swift"],
+  "activationEvents": ["*"],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -46,10 +46,6 @@
       {
         "command": "swancommands.cryptoAnalysis",
         "title": "cryptoAnalysis"
-      },
-      {
-        "command": "swancommands.debug",
-        "title": "debug"
       },
       {
         "command": "swancommands.setAnalysisPath",
