@@ -38,26 +38,40 @@ function activate(context) {
     console.log('Extension is now active!');
 
     // Reset settings to their defaults
-    resetSettingsToDefaults();
+    resetSettingsToDefaults(true);
     //initialize the paths to what they were previously set to 
     initializePaths();
 
-    function resetSettingsToDefaults() {
+    function resetSettingsToDefaults(first) {
        
-    
+        let defaults;
         // Default values for all settings
-        const defaults = {
-            'forceCacheRead': false,
-            'debug': false,
-            'callGraph': false,
-            'invalidateCache': false,
-            'names': false,
-            'dot': false,
-            'probe': false,
-            'single': false,
-            'taintAnalysisSpecPath': '',
-            'typestateAnalysisSpecPath': '',
-        };
+        if(first){
+             defaults = {
+                'forceCacheRead': false,
+                'debug': false,
+                'callGraph': false,
+                'invalidateCache': false,
+                'names': false,
+                'dot': false,
+                'probe': false,
+                'single': false,
+            };
+        } else {
+             defaults = {
+                'forceCacheRead': false,
+                'debug': false,
+                'callGraph': false,
+                'invalidateCache': false,
+                'names': false,
+                'dot': false,
+                'probe': false,
+                'single': false,
+                "taintAnalysisSpecPath": "",
+                "typestateAnalysisSpecPath": ""
+            };
+        }
+        
     
         // Reset each setting to its default value
         for (const [key, defaultValue] of Object.entries(defaults)) {
@@ -76,31 +90,31 @@ function activate(context) {
 
     function initializePaths(){
         //taint path initialization
-        validatePath('taint')
+        validatePath('taint',false)
         sharedState.taintAnalysisUserPath = config.get("taintAnalysisSpecPath", "");
         settingsProvider.refresh();
         //vscode.window.showInformationMessage(`Taint Analysis Spec path updated to: ${sharedState.taintAnalysisUserPath}`);
         //typestate path initialization 
-        validatePath('typestate')
+        validatePath('typestate',false)
         sharedState.typestateAnalysisUserPath = config.get("typestateAnalysisSpecPath", "");
         settingsProvider.refresh();
         //vscode.window.showInformationMessage(`Typestate Analysis Spec path updated to: ${sharedState.typestateAnalysisUserPath}`);
         //swiftc path initialization
-        validatePath('swiftc');
+        validatePath('swiftc',true);
         swiftcPath = config.get('swiftcPath',"");
         //vscode.window.showInformationMessage(`swan-swiftc path updated to: ${swiftcPath}`);
         //driver.jar path initialization
-        validatePath('driver');
+        validatePath('driver',true);
         driverJarPath = config.get('swan-Driver',"");
         //vscode.window.showInformationMessage(`driver.jar path updated to: ${driverJarPath}`);
         //swan-spm.py path initialization
-        validatePath('swan-spm');
+        validatePath('swan-spm',true);
         swanSpmPath = config.get('swan-spm',"");
         vscode.window.showInformationMessage(`swan-spm.py path updated to: ${swanSpmPath}`);
     }
 
     const resetToDefaultSettings = vscode.commands.registerCommand('swancommands.defaults', function () {
-        resetSettingsToDefaults();
+        resetSettingsToDefaults(false);
     })
 
    let diagnosticCollection = vscode.languages.createDiagnosticCollection('analyzeMethods')
@@ -184,12 +198,12 @@ function activate(context) {
     vscode.workspace.onDidChangeConfiguration((event) => {
         const config = vscode.workspace.getConfiguration("swan");
         if (event.affectsConfiguration("swan.taintAnalysisSpecPath")) {
-            validatePath('taint')
+            validatePath('taint',true)
             sharedState.taintAnalysisUserPath = config.get("taintAnalysisSpecPath", "");
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Taint Analysis Spec path updated to: ${sharedState.taintAnalysisUserPath}`);
         } else if (event.affectsConfiguration("swan.typestateAnalysisSpecPath")) {
-            validatePath('typestate')
+            validatePath('typestate',true)
             sharedState.typestateAnalysisUserPath = config.get("typestateAnalysisSpecPath", "");
             settingsProvider.refresh();
             vscode.window.showInformationMessage(`Typestate Analysis Spec path updated to: ${sharedState.typestateAnalysisUserPath}`);
@@ -218,20 +232,20 @@ function activate(context) {
              boolSingle = config.get("single", false);
             vscode.window.showInformationMessage(`Single-Threaded Execution updated to: ${boolSingle}`);
         } else if (event.affectsConfiguration('swan.swiftcPath')) {
-              validatePath('swiftc');
+              validatePath('swiftc',true);
               vscode.window.showInformationMessage(`swan-swiftc path updated to: ${swiftcPath}`);
         } else if (event.affectsConfiguration('swan.swan-Driver')) {
-              validatePath('driver');
+              validatePath('driver',true);
               vscode.window.showInformationMessage(`driver.jar path updated to: ${driverJarPath}`);
       } else if(event.affectsConfiguration('swan.swan-spm')){
-        validatePath('swan-spm');
+        validatePath('swan-spm',true);
         vscode.window.showInformationMessage(`swan-spm.py path updated to: ${swanSpmPath}`);
       }
         
     });
 
     
-function validatePath(type) {
+function validatePath(type, show) {
   const config = vscode.workspace.getConfiguration('swan');
   console.log('I am being called')
   let Path='';
@@ -252,7 +266,9 @@ function validatePath(type) {
     const trimmedValue = Path.trim(); // Remove any extra spaces
 
     if (!Path || trimmedValue === "") {
-        vscode.window.showErrorMessage(`Path to ${type} cannot be empty please input the correct path`);
+        if (show){
+            vscode.window.showErrorMessage(`Path to ${type} cannot be empty please input the correct path`);
+        }
         if (type ==='typestate'){
             isTypestatePathValid = false;
         } else if (type ==='taint'){
@@ -284,6 +300,7 @@ function validatePath(type) {
     if (Path && typeof Path ==='string') {
     const trimmedInput = Path.trim();
     }
+
 }
     
 
