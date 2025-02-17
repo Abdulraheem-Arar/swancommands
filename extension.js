@@ -518,20 +518,20 @@ function activate(context) {
                                                                     titles.push(item.source.name)//pushes the name of the source
                                                                     titles.push(item.sink.name)//pushes the name of the corresponding sink 
                                                                     item.path.forEach((path)=>{ //for each pat
-                                                                        urls.push(path)//pushes path to url array and then extracts row and column coordinates to create diagnostics
+                                                                        urls.push(path)//pushes path to urls array and then extracts row and column coordinates to create diagnostics
                                                                             const match = path.match(/^(.*):(\d+):(\d+)$/);
                                                                             if (match) {
                                                                             const [_, filePath, lineStr, colStr] = match;
                                                                             const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
                                                                             const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
 
-                                                                            const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning); 
-                                                                            diagnostics.push(diagnostic) 
+                                                                            const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col )); // creates the squiggly lines under the area the analysis flagged
+                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning); // creates the diagnostic for the issue reported by the analysis
+                                                                            diagnostics.push(diagnostic) // pushes the diagnostic to the diagnostics array
                                                                             }
                                                                             const activeEditor = vscode.window.activeTextEditor;
                                                                             if (activeEditor) {
-                                                                            diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                                            diagnosticCollection.set(activeEditor.document.uri, diagnostics) //if there is an active editor then set the diagnostics on it (basically show them on screen)
                                                                         }
                                                                         });
                                                                         try {
@@ -542,29 +542,29 @@ function activate(context) {
                                                                             console.error("Error while adding error to errorsProvider:", err);
                                                                         }
                                                             })
-                                                            } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){
+                                                            } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){ // if there are errors from typestate analysis 
                                                                 let advice = jsonData[0].advice;
                                                                 jsonData[0].errors.forEach((error)=>{
                                                                     let path = folderPath + '/' + error.pos ;
-                                                                    urls.push(path)
+                                                                    urls.push(path) // pushes path to the urls array 
                                                                     titles.push(error.message)
-                                                                    const match = path.match(/^(.*):(\d+):(\d+)$/);
-                                                                    if (match) {
-                                                                      const [_, filePath, lineStr, colStr] = match;
+                                                                    const match = path.match(/^(.*):(\d+):(\d+)$/); 
+                                                                    if (match) { 
+                                                                      const [_, filePath, lineStr, colStr] = match; 
                                                                       const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
                                                                       const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
-                                                                      const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this : ${advice}`, vscode.DiagnosticSeverity.Warning); 
+                                                                      const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col )); // creates the underlines for the area flagged by typestate analysis 
+                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this : ${advice}`, vscode.DiagnosticSeverity.Warning); // creates the diagnostic for the error flagged by the analysis 
                                                                       diagnostics.push(diagnostic) 
                                                                     }
-                                                                    const activeEditor = vscode.window.activeTextEditor;
+                                                                    const activeEditor = vscode.window.activeTextEditor; 
                                                                     if (activeEditor) {
-                                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics) //sets the diagnostics on the current active editor
                                                                 }
                                                                 });
                                                                 try {
                                                                     console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
-                                                                    errorsProvider.addError(jsonData[0].name, jsonData[0].description,titles, urls);
+                                                                    errorsProvider.addError(jsonData[0].name, jsonData[0].description,titles, urls); // adds the error to the tree view on the extension
                                                                     console.log("just added the error");
                                                                 } catch (err) {
                                                                     console.error("Error while adding error to errorsProvider:", err);
@@ -597,7 +597,7 @@ function activate(context) {
             
             } else {
 
-                    cp.exec(`cd ${packageSwiftDirectory} && swift package clean`,(error, stdout, stderr)=>{
+                    cp.exec(`cd ${packageSwiftDirectory} && swift package clean`,(error, stdout, stderr)=>{ //removes all the build files for the spm project
                         if (error){
                             console.log('Error removing .build folder:', stderr)
                         } else {
@@ -606,12 +606,12 @@ function activate(context) {
                     })
                     
                
-              cp.exec(`cd ${packageSwiftDirectory} &&  python3 ${swanSpmPath}`, (error, stdout, stderr) => { 
+              cp.exec(`cd ${packageSwiftDirectory} &&  python3 ${swanSpmPath}`, (error, stdout, stderr) => { //generates the SIL for an spm project 
                     if (error) {
                         outputChannel.appendLine(`Error: ${stderr}`);
                     } else{
                         setTimeout(() => {
-                            fs.readdir(`${packageSwiftDirectory}/swan-dir`, (err, files) => {
+                            fs.readdir(`${packageSwiftDirectory}/swan-dir`, (err, files) => { //reads the swan dir with the feedback from the extension
                                 if (err) {
                                    outputChannel.appendLine(`Error reading swan-dir: ${err.message}`);
                                    }
@@ -620,15 +620,15 @@ function activate(context) {
                                     }
                                 // Proceed with the command only if files are present
                                 if (files.length > 0) {
-                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} ${command} ${userPath} ${boolCommands} swan-dir/ `, (error, stdout, stderr) => { 
+                                    cp.exec(`cd ${packageSwiftDirectory} && java -jar ${driverJarPath} ${command} ${userPath} ${boolCommands} swan-dir/ `, (error, stdout, stderr) => { // runs the analysis on the results file 
                                         if (error) {
                                             outputChannel.appendLine(`Error: ${stderr}`);
                                         } else {
                                             outputChannel.appendLine(`Output: ${stdout || "No output returned from the script."}`);
                                             if (type !='callGraph'){
                                                 try {
-                                                    const resultFilePath = path.join(packageSwiftDirectory, 'swan-dir', `${type}-results.json`);
-                                                fs.readFile(resultFilePath, 'utf8', (err, data) => {
+                                                    const resultFilePath = path.join(packageSwiftDirectory, 'swan-dir', `${type}-results.json`); // determines result file path depending on analysis type
+                                                fs.readFile(resultFilePath, 'utf8', (err, data) => { //reads the file 
                                                     if (err) {
                                                         outputChannel.appendLine(`Error reading ${type}-results.json: ${err.message}`);
                                                     } else {
@@ -639,61 +639,61 @@ function activate(context) {
                                                             let diagnostics = [];
                                                             let urls=[];
                                                             let titles = [];
-                                                            if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){
+                                                            if(type === 'taint' && jsonData[0].paths && jsonData[0].paths.length>0){ // if it is taint analysis and there are paths on the 
                                                                 let advice = jsonData[0].advice;
-                                                                jsonData[0].paths.forEach((item)=>{
+                                                                jsonData[0].paths.forEach((item)=>{ // for each item / instability returned by the analysis 
                                                                     titles= [];
                                                                     urls =[];
-                                                                    titles.push(item.source.name)
-                                                                    titles.push(item.sink.name)
-                                                                    item.path.forEach((path)=>{
-                                                                        urls.push(path)
+                                                                    titles.push(item.source.name) //pushes the name of the source
+                                                                    titles.push(item.sink.name) //pushes the name of the sink 
+                                                                    item.path.forEach((path)=>{ //  for each path flagged by the instability
+                                                                        urls.push(path) // pushes the url to the array in order to be displayed later
                                                                             const match = path.match(/^(.*):(\d+):(\d+)$/);
                                                                             if (match) {
                                                                             const [_, filePath, lineStr, colStr] = match;
                                                                             const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
                                                                             const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
 
-                                                                            const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning); 
+                                                                            const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col )); // the underlines are added to the active editor 
+                                                                            const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning);  // the message/diagnostic is made and pushed to the diagnostics array   
                                                                             diagnostics.push(diagnostic) 
                                                                             }
                                                                             const activeEditor = vscode.window.activeTextEditor;
                                                                             if (activeEditor) {
-                                                                            diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                                            diagnosticCollection.set(activeEditor.document.uri, diagnostics) //the diagnostic is displayed on the active editor
                                                                         }
                                                                         });
                                                                         try {
                                                                             console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
-                                                                            errorsProvider.addError(jsonData[0].name, jsonData[0].description, titles, urls);
+                                                                            errorsProvider.addError(jsonData[0].name, jsonData[0].description, titles, urls); // adds the error to the active editor
                                                                             console.log("just added the error");
                                                                         } catch (err) {
                                                                             console.error("Error while adding error to errorsProvider:", err);
                                                                         }
                                                                 })
-                                                            } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){
+                                                            } else if (type === 'typestate' && jsonData[0].errors && jsonData[0].errors.length>0){ // if the analysis type is typestate and there is feedback from the running it 
                                                                 let advice = jsonData[0].advice;
-                                                                jsonData[0].errors.forEach((error)=>{
+                                                                jsonData[0].errors.forEach((error)=>{ //for each error flagged 
                                                                     let path = folderPath + '/' + error.pos ;
-                                                                    urls.push(path)
-                                                                    titles.push(error.message)
+                                                                    urls.push(path) //pushes the url to the urls array 
+                                                                    titles.push(error.message) //pushes title to the titles array 
                                                                     const match = path.match(/^(.*):(\d+):(\d+)$/);
                                                                     if (match) {
                                                                       const [_, filePath, lineStr, colStr] = match;
                                                                       const line = parseInt(lineStr, 10) - 1; // Convert to 0-based index
                                                                       const col = parseInt(colStr, 10) - 1;  // Convert to 0-based index
-                                                                      const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col ));
-                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning); 
+                                                                      const range = new vscode.Range(new vscode.Position(line, col), new vscode.Position(line , col )); // creates the underlines on the active editor 
+                                                                      const diagnostic = new vscode.Diagnostic(range, `${type} analysis flagged this: ${advice}`, vscode.DiagnosticSeverity.Warning); // creates the diagnostic and adds it to the array containing all the diagnostics
                                                                       diagnostics.push(diagnostic) 
                                                                     }
                                                                     const activeEditor = vscode.window.activeTextEditor;
                                                                     if (activeEditor) {
-                                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics)
+                                                                    diagnosticCollection.set(activeEditor.document.uri, diagnostics) //sets the diagnostics on the active editor using the contents of the array 
                                                                 }
                                                                 });
                                                                 try {
                                                                     console.log("Calling addError with:", jsonData[0].name, jsonData[0].description,titles, urls);
-                                                                    errorsProvider.addError(jsonData[0].name, jsonData[0].description, titles, urls);
+                                                                    errorsProvider.addError(jsonData[0].name, jsonData[0].description, titles, urls); // adds the error onto the swan tree 
                                                                     console.log("just added the error");
                                                                 } catch (err) {
                                                                     console.error("Error while adding error to errorsProvider:", err);
